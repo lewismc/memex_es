@@ -398,28 +398,15 @@ Index: src/java/org/apache/nutch/indexer/NutchDocument.java
 ===================================================================
 --- src/java/org/apache/nutch/indexer/NutchDocument.java	(revision 1683812)
 +++ src/java/org/apache/nutch/indexer/NutchDocument.java	(working copy)
-@@ -19,6 +19,8 @@
- import java.io.DataInput;
- import java.io.DataOutput;
- import java.io.IOException;
-+import java.util.ArrayList;
-+import java.util.Arrays;
- import java.util.Collection;
- import java.util.HashMap;
- import java.util.Iterator;
-@@ -30,7 +32,11 @@
+@@ -30,6 +30,7 @@
  import org.apache.hadoop.io.Writable;
  import org.apache.hadoop.io.WritableUtils;
  import org.apache.nutch.metadata.Metadata;
 +import org.json.simple.JSONObject;
-+import org.json.simple.JSONValue;
  
-+import com.sun.tools.jdi.LinkedHashMap;
-+
  /** A {@link NutchDocument} is the unit of indexing. */
  public class NutchDocument implements Writable,
-     Iterable<Entry<String, NutchField>> {
-@@ -141,4 +147,17 @@
+@@ -141,4 +142,17 @@
      sb.append("}\n");
      return sb.toString();
    }
@@ -595,7 +582,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 ===================================================================
 --- src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(working copy)
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,142 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -614,12 +601,10 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 + */
 +package org.apache.nutch.index.memex.atf;
 +
-+import java.io.IOException;
-+import java.net.MalformedURLException;
-+import java.net.URL;
 +import java.util.ArrayList;
 +import java.util.Arrays;
 +import java.util.HashMap;
++import java.util.List;
 +
 +import org.apache.hadoop.conf.Configuration;
 +import org.apache.hadoop.io.Text;
@@ -717,7 +702,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +    crawlMap.put("content", new ArrayList<String>(Arrays.asList(parse.getText())));
 +
 +    if (inlinks != null) {
-+      ArrayList<String> linksList = (ArrayList<String>) Arrays.asList(inlinks.getAnchors());
++      List<String> linksList = Arrays.asList(inlinks.getAnchors());
 +      ArrayList<String> images = new ArrayList<String>();
 +      ArrayList<String> videos = new ArrayList<String>();
 +
@@ -1089,7 +1074,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +    factory = new JestClientFactory();
 +    factory.setHttpClientConfig(new HttpClientConfig.
 +        Builder("https://els.istresearch.com:9200").multiThreaded(true)
-+        .defaultCredentials("", "").build()); //insert your credentials here
++        .defaultCredentials("memex", "j9fd0LK8.a6olH24U7X81").build());
 +    client = factory.getObject();
 +  }
 +
