@@ -1,8 +1,8 @@
 Index: build.xml
 ===================================================================
---- build.xml	(revision 1683812)
+--- build.xml	(revision 1693468)
 +++ build.xml	(working copy)
-@@ -173,6 +173,7 @@
+@@ -172,6 +172,7 @@
        <packageset dir="${plugins.dir}/feed/src/java"/>
        <packageset dir="${plugins.dir}/headings/src/java"/>
        <packageset dir="${plugins.dir}/index-anchor/src/java"/>
@@ -18,7 +18,7 @@ Index: build.xml
        <packageset dir="${plugins.dir}/indexer-solr/src/java"/>
        <packageset dir="${plugins.dir}/language-identifier/src/java"/>
        <packageset dir="${plugins.dir}/lib-http/src/java"/>
-@@ -583,6 +585,7 @@
+@@ -585,6 +587,7 @@
        <packageset dir="${plugins.dir}/feed/src/java"/>
        <packageset dir="${plugins.dir}/headings/src/java"/>
        <packageset dir="${plugins.dir}/index-anchor/src/java"/>
@@ -26,7 +26,7 @@ Index: build.xml
        <packageset dir="${plugins.dir}/index-basic/src/java"/>
        <packageset dir="${plugins.dir}/index-geoip/src/java"/>
        <packageset dir="${plugins.dir}/index-metadata/src/java"/>
-@@ -591,6 +594,7 @@
+@@ -594,6 +597,7 @@
        <packageset dir="${plugins.dir}/mimetype-filter/src/java"/>
        <packageset dir="${plugins.dir}/indexer-dummy/src/java"/>
        <packageset dir="${plugins.dir}/indexer-elastic/src/java/" />
@@ -34,7 +34,7 @@ Index: build.xml
        <packageset dir="${plugins.dir}/indexer-solr/src/java"/>
        <packageset dir="${plugins.dir}/language-identifier/src/java"/>
        <packageset dir="${plugins.dir}/lib-http/src/java"/>
-@@ -973,6 +977,8 @@
+@@ -978,6 +982,8 @@
          <source path="${plugins.dir}/headings/src/java/" />
          <source path="${plugins.dir}/index-anchor/src/java/" />
          <source path="${plugins.dir}/index-anchor/src/test/" />
@@ -43,7 +43,7 @@ Index: build.xml
          <source path="${plugins.dir}/index-basic/src/java/" />
          <source path="${plugins.dir}/index-basic/src/test/" />
          <source path="${plugins.dir}/index-geoip/src/java/" />
-@@ -982,6 +988,7 @@
+@@ -987,6 +993,7 @@
          <source path="${plugins.dir}/indexer-dummy/src/java/" />
          <source path="${plugins.dir}/indexer-solr/src/java/" />
          <source path="${plugins.dir}/indexer-elastic/src/java/" />
@@ -51,50 +51,9 @@ Index: build.xml
          <source path="${plugins.dir}/index-metadata/src/java/" />
          <source path="${plugins.dir}/index-more/src/java/" />
          <source path="${plugins.dir}/index-more/src/test/" />
-Index: conf/nutch-default.xml
-===================================================================
---- conf/nutch-default.xml	(revision 1683812)
-+++ conf/nutch-default.xml	(working copy)
-@@ -1633,6 +1633,36 @@
-   <description>Maximum size of the bulk in bytes.</description>
- </property>
- 
-+<property> 
-+  <name>elastic.shield.user</name>
-+  <value></value> 
-+  <description></description>
-+</property>
-+
-+<property> 
-+  <name>elastic.shield.password</name>
-+  <value></value> 
-+  <description></description>
-+</property>
-+
-+<property> 
-+  <name>elastic.shield.ssl.keystore.path</name>
-+  <value></value> 
-+  <description></description>
-+</property>
-+
-+<property> 
-+  <name>elastic.shield.ssl.keystore.password</name>
-+  <value></value> 
-+  <description></description>
-+</property>
-+
-+<property> 
-+  <name>elastic.shield.transport.ssl</name>
-+  <value></value> 
-+  <description></description>
-+</property>
-+
- <!-- subcollection properties -->
- 
- <property>
 Index: ivy/ivy.xml
 ===================================================================
---- ivy/ivy.xml	(revision 1683812)
+--- ivy/ivy.xml	(revision 1693468)
 +++ ivy/ivy.xml	(working copy)
 @@ -34,6 +34,9 @@
  	</publications>
@@ -108,7 +67,7 @@ Index: ivy/ivy.xml
  		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1"
 Index: ivy/ivysettings.xml
 ===================================================================
---- ivy/ivysettings.xml	(revision 1683812)
+--- ivy/ivysettings.xml	(revision 1693468)
 +++ ivy/ivysettings.xml	(working copy)
 @@ -28,6 +28,9 @@
    <property name="oss.sonatype.org" 
@@ -155,9 +114,27 @@ Index: ivy/ivysettings.xml
      </chain>
    </resolvers>
    <modules>
+Index: src/bin/nutch
+===================================================================
+--- src/bin/nutch	(revision 1693468)
++++ src/bin/nutch	(working copy)
+@@ -128,11 +128,12 @@
+ 
+ JAVA="$JAVA_HOME/bin/java"
+ JAVA_HEAP_MAX=-Xmx1000m 
++NUTCH_HEAPSIZE=6000
+ 
+ # check envvars which might override default args
+ if [ "$NUTCH_HEAPSIZE" != "" ]; then
+   #echo "run with heapsize $NUTCH_HEAPSIZE"
+-  JAVA_HEAP_MAX="-Xmx""$NUTCH_HEAPSIZE""m"
++  JAVA_HEAP_MAX="-Xmx""$NUTCH_HEAPSIZE"
+   #echo $JAVA_HEAP_MAX
+ fi
+ 
 Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1683812)
+--- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1693468)
 +++ src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(working copy)
 @@ -22,6 +22,8 @@
  
@@ -166,9 +143,9 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 +import org.apache.commons.codec.binary.Base64;
 +import org.apache.commons.codec.binary.StringUtils;
  import org.apache.hadoop.conf.Configured;
+ import org.apache.hadoop.fs.FileSystem;
  import org.apache.hadoop.fs.Path;
- import org.apache.hadoop.io.Text;
-@@ -46,12 +48,13 @@
+@@ -48,12 +50,13 @@
  import org.apache.nutch.parse.ParseData;
  import org.apache.nutch.parse.ParseImpl;
  import org.apache.nutch.parse.ParseText;
@@ -184,7 +161,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
    public static final Logger LOG = LoggerFactory
        .getLogger(IndexerMapReduce.class);
-@@ -62,10 +65,12 @@
+@@ -64,10 +67,12 @@
    public static final String INDEXER_SKIP_NOTMODIFIED = "indexer.skip.notmodified";
    public static final String URL_FILTERING = "indexer.url.filters";
    public static final String URL_NORMALIZING = "indexer.url.normalizers";
@@ -197,7 +174,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
    private IndexingFilters filters;
    private ScoringFilters scfilters;
  
-@@ -89,6 +94,7 @@
+@@ -91,6 +96,7 @@
      this.deleteRobotsNoIndex = job.getBoolean(INDEXER_DELETE_ROBOTS_NOINDEX,
          false);
      this.skip = job.getBoolean(INDEXER_SKIP_NOTMODIFIED, false);
@@ -205,7 +182,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
      normalize = job.getBoolean(URL_NORMALIZING, false);
      filter = job.getBoolean(URL_FILTERING, false);
-@@ -157,7 +163,7 @@
+@@ -159,7 +165,7 @@
  
    public void map(Text key, Writable value,
        OutputCollector<Text, NutchWritable> output, Reporter reporter)
@@ -214,7 +191,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
      String urlString = filterUrl(normalizeUrl(key.toString()));
      if (urlString == null) {
-@@ -171,10 +177,11 @@
+@@ -173,10 +179,11 @@
  
    public void reduce(Text key, Iterator<NutchWritable> values,
        OutputCollector<Text, NutchIndexAction> output, Reporter reporter)
@@ -227,7 +204,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
      ParseData parseData = null;
      ParseText parseText = null;
  
-@@ -217,6 +224,8 @@
+@@ -219,6 +226,8 @@
          }
        } else if (value instanceof ParseText) {
          parseText = (ParseText) value;
@@ -236,7 +213,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
        } else if (LOG.isWarnEnabled()) {
          LOG.warn("Unrecognized type: " + value.getClass());
        }
-@@ -265,15 +274,15 @@
+@@ -267,15 +276,15 @@
      }
  
      NutchDocument doc = new NutchDocument();
@@ -255,7 +232,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
      final Parse parse = new ParseImpl(parseText, parseData);
      try {
-@@ -323,8 +332,21 @@
+@@ -325,8 +334,21 @@
      // apply boost to all indexed fields.
      doc.setWeight(boost);
      // store boost for use by explain and dedup
@@ -278,7 +255,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
      reporter.incrCounter("IndexerStatus", "indexed (add/update)", 1);
  
      NutchIndexAction action = new NutchIndexAction(doc, NutchIndexAction.ADD);
-@@ -335,7 +357,7 @@
+@@ -337,7 +359,7 @@
    }
  
    public static void initMRJob(Path crawlDb, Path linkDb,
@@ -287,7 +264,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
      LOG.info("IndexerMapReduce: crawldb: " + crawlDb);
  
-@@ -350,6 +372,10 @@
+@@ -352,6 +374,10 @@
            CrawlDatum.PARSE_DIR_NAME));
        FileInputFormat.addInputPath(job, new Path(segment, ParseData.DIR_NAME));
        FileInputFormat.addInputPath(job, new Path(segment, ParseText.DIR_NAME));
@@ -300,9 +277,9 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
      FileInputFormat.addInputPath(job, new Path(crawlDb, CrawlDb.CURRENT_NAME));
 Index: src/java/org/apache/nutch/indexer/IndexingJob.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1683812)
+--- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1693468)
 +++ src/java/org/apache/nutch/indexer/IndexingJob.java	(working copy)
-@@ -78,7 +78,23 @@
+@@ -83,7 +83,23 @@
    public void index(Path crawlDb, Path linkDb, List<Path> segments,
        boolean noCommit, boolean deleteGone, String params, boolean filter,
        boolean normalize) throws IOException {
@@ -326,7 +303,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
      long start = System.currentTimeMillis();
      LOG.info("Indexer: starting at " + sdf.format(start));
-@@ -89,11 +105,17 @@
+@@ -94,11 +110,17 @@
      LOG.info("Indexer: deleting gone documents: " + deleteGone);
      LOG.info("Indexer: URL filtering: " + filter);
      LOG.info("Indexer: URL normalizing: " + normalize);
@@ -346,7 +323,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
  
      // NOW PASSED ON THE COMMAND LINE AS A HADOOP PARAM
      // job.set(SolrConstants.SERVER_URL, solrUrl);
-@@ -101,6 +123,7 @@
+@@ -106,6 +128,7 @@
      job.setBoolean(IndexerMapReduce.INDEXER_DELETE, deleteGone);
      job.setBoolean(IndexerMapReduce.URL_FILTERING, filter);
      job.setBoolean(IndexerMapReduce.URL_NORMALIZING, normalize);
@@ -354,7 +331,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
  
      if (params != null) {
        job.set(IndexerMapReduce.INDEXER_PARAMS, params);
-@@ -136,7 +159,8 @@
+@@ -141,7 +164,8 @@
    public int run(String[] args) throws Exception {
      if (args.length < 2) {
        System.err
@@ -364,7 +341,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
        IndexWriters writers = new IndexWriters(getConf());
        System.err.println(writers.describe());
        return -1;
-@@ -152,6 +176,8 @@
+@@ -157,6 +181,8 @@
      boolean deleteGone = false;
      boolean filter = false;
      boolean normalize = false;
@@ -373,7 +350,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
  
      for (int i = 1; i < args.length; i++) {
        if (args[i].equals("-linkdb")) {
-@@ -175,6 +201,10 @@
+@@ -180,6 +206,10 @@
          filter = true;
        } else if (args[i].equals("-normalize")) {
          normalize = true;
@@ -384,7 +361,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
        } else if (args[i].equals("-params")) {
          params = args[++i];
        } else {
-@@ -183,8 +213,7 @@
+@@ -188,8 +218,7 @@
      }
  
      try {
@@ -396,7 +373,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
        LOG.error("Indexer: " + StringUtils.stringifyException(e));
 Index: src/java/org/apache/nutch/indexer/NutchDocument.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/NutchDocument.java	(revision 1683812)
+--- src/java/org/apache/nutch/indexer/NutchDocument.java	(revision 1693468)
 +++ src/java/org/apache/nutch/indexer/NutchDocument.java	(working copy)
 @@ -30,6 +30,7 @@
  import org.apache.hadoop.io.Writable;
@@ -426,17 +403,17 @@ Index: src/java/org/apache/nutch/indexer/NutchDocument.java
  }
 Index: src/plugin/build.xml
 ===================================================================
---- src/plugin/build.xml	(revision 1683812)
+--- src/plugin/build.xml	(revision 1693468)
 +++ src/plugin/build.xml	(working copy)
 @@ -33,6 +33,7 @@
       <ant dir="index-anchor" target="deploy"/>
       <ant dir="index-geoip" target="deploy"/>
       <ant dir="index-more" target="deploy"/>
 +     <ant dir="index-memex-atf" target="deploy"/>
+      <ant dir="index-replace" target="deploy"/>
       <ant dir="index-static" target="deploy"/>
       <ant dir="index-metadata" target="deploy"/>
-      <ant dir="mimetype-filter" target="deploy"/>
-@@ -39,6 +40,7 @@
+@@ -40,6 +41,7 @@
       <ant dir="indexer-dummy" target="deploy"/>
       <ant dir="indexer-elastic" target="deploy"/>
       <ant dir="indexer-solr" target="deploy"/>
@@ -444,13 +421,15 @@ Index: src/plugin/build.xml
       <ant dir="language-identifier" target="deploy"/>
       <ant dir="lib-http" target="deploy"/>
       <ant dir="lib-nekohtml" target="deploy"/>
-@@ -134,11 +136,13 @@
+@@ -138,6 +140,7 @@
      <ant dir="index-anchor" target="clean"/>
      <ant dir="index-geoip" target="clean"/>
      <ant dir="index-more" target="clean"/>
 +    <ant dir="index-memex-atf" target="clean"/>
      <ant dir="index-static" target="clean"/>
+     <ant dir="index-replace" target="clean"/>
      <ant dir="index-metadata" target="clean"/>
+@@ -144,6 +147,7 @@
      <ant dir="mimetype-filter" target="clean"/>
      <ant dir="indexer-dummy" target="clean"/>
      <ant dir="indexer-elastic" target="clean"/>
@@ -977,7 +956,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
 +++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(working copy)
-@@ -0,0 +1,166 @@
+@@ -0,0 +1,174 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1004,13 +983,15 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +import io.searchbox.core.Index;
 +
 +import java.io.IOException;
++import java.util.ArrayList;
 +import java.util.Arrays;
-+import java.util.concurrent.TimeUnit;
++import java.util.List;
 +
 +import org.apache.hadoop.conf.Configuration;
 +import org.apache.hadoop.mapred.JobConf;
 +import org.apache.nutch.indexer.IndexWriter;
 +import org.apache.nutch.indexer.NutchDocument;
++import org.apache.solr.common.SolrInputDocument;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
@@ -1042,12 +1023,17 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +public class MemexIndexWriter implements IndexWriter {
 +
 +  private JestClientFactory factory;
-+  
++
 +  private JestClient client;
 +
 +  private Configuration config;
-+  
++
 +  private static Logger LOG = LoggerFactory.getLogger(MemexIndexWriter.class);
++
++  private final List<NutchDocument> inputDocs = new ArrayList<NutchDocument>();
++  
++  private int batchSize = 50;
++
 +
 +  /**
 +   * @see org.apache.hadoop.conf.Configurable#getConf()
@@ -1074,7 +1060,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +    factory = new JestClientFactory();
 +    factory.setHttpClientConfig(new HttpClientConfig.
 +        Builder("https://els.istresearch.com:9200").multiThreaded(true)
-+        .defaultCredentials("memex", "j9fd0LK8.a6olH24U7X81").build());
++        .defaultCredentials("memex", "j9fd0LK8.a6olH24U7X81").connTimeout(300000).build());
 +    client = factory.getObject();
 +  }
 +
@@ -1085,17 +1071,18 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +  public void write(NutchDocument doc) throws IOException {
 +
 +    Bulk bulk = new Bulk.Builder()
-+    .defaultIndex("memex-domains-dev")
-+    .defaultType("weapons")
++    .defaultIndex("memex-domains")
++    .defaultType("autonomy")
 +    .addAction(Arrays.asList(
 +        new Index.Builder(doc.toJSON()).build()))
-+    .build();
-+    //Index index = new Index.Builder(doc.toString()).index("memex-domains-dev").type("weapons").build();
-+    //LOG.info(doc.toJSON());
-+    JestResult result = client.execute(bulk);
-+    LOG.info(result.getJsonString());
-+    LOG.info(result.getErrorMessage());
-+    LOG.info(result.getPathToResult());
++        .build();
++    inputDocs.add(doc);
++    if (inputDocs.size() > batchSize) {
++      JestResult result = client.execute(bulk);
++      LOG.info(result.getJsonString());
++      LOG.info(result.getErrorMessage());
++      LOG.info(result.getPathToResult());
++    }
 +
 +  }
 +
