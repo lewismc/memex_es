@@ -1,8 +1,8 @@
 Index: build.xml
 ===================================================================
---- build.xml	(revision 1693468)
+--- build.xml	(revision 1715901)
 +++ build.xml	(working copy)
-@@ -172,6 +172,7 @@
+@@ -177,6 +177,7 @@
        <packageset dir="${plugins.dir}/feed/src/java"/>
        <packageset dir="${plugins.dir}/headings/src/java"/>
        <packageset dir="${plugins.dir}/index-anchor/src/java"/>
@@ -10,7 +10,7 @@ Index: build.xml
        <packageset dir="${plugins.dir}/index-basic/src/java"/>
        <packageset dir="${plugins.dir}/index-metadata/src/java"/>
        <packageset dir="${plugins.dir}/index-more/src/java"/>
-@@ -181,6 +182,7 @@
+@@ -187,6 +188,7 @@
        <packageset dir="${plugins.dir}/mimetype-filter/src/java"/>
        <packageset dir="${plugins.dir}/indexer-dummy/src/java"/>
        <packageset dir="${plugins.dir}/indexer-elastic/src/java/" />
@@ -18,7 +18,7 @@ Index: build.xml
        <packageset dir="${plugins.dir}/indexer-solr/src/java"/>
        <packageset dir="${plugins.dir}/language-identifier/src/java"/>
        <packageset dir="${plugins.dir}/lib-http/src/java"/>
-@@ -585,6 +587,7 @@
+@@ -614,6 +616,7 @@
        <packageset dir="${plugins.dir}/feed/src/java"/>
        <packageset dir="${plugins.dir}/headings/src/java"/>
        <packageset dir="${plugins.dir}/index-anchor/src/java"/>
@@ -26,7 +26,7 @@ Index: build.xml
        <packageset dir="${plugins.dir}/index-basic/src/java"/>
        <packageset dir="${plugins.dir}/index-geoip/src/java"/>
        <packageset dir="${plugins.dir}/index-metadata/src/java"/>
-@@ -594,6 +597,7 @@
+@@ -624,6 +627,7 @@
        <packageset dir="${plugins.dir}/mimetype-filter/src/java"/>
        <packageset dir="${plugins.dir}/indexer-dummy/src/java"/>
        <packageset dir="${plugins.dir}/indexer-elastic/src/java/" />
@@ -34,16 +34,15 @@ Index: build.xml
        <packageset dir="${plugins.dir}/indexer-solr/src/java"/>
        <packageset dir="${plugins.dir}/language-identifier/src/java"/>
        <packageset dir="${plugins.dir}/lib-http/src/java"/>
-@@ -978,6 +982,8 @@
+@@ -1008,6 +1012,7 @@
          <source path="${plugins.dir}/headings/src/java/" />
          <source path="${plugins.dir}/index-anchor/src/java/" />
          <source path="${plugins.dir}/index-anchor/src/test/" />
 +        <source path="${plugins.dir}/index-memex-atf/src/java"/>
-+        <source path="${plugins.dir}/index-memex-atf/src/test"/>
          <source path="${plugins.dir}/index-basic/src/java/" />
          <source path="${plugins.dir}/index-basic/src/test/" />
          <source path="${plugins.dir}/index-geoip/src/java/" />
-@@ -987,6 +993,7 @@
+@@ -1018,6 +1023,7 @@
          <source path="${plugins.dir}/indexer-dummy/src/java/" />
          <source path="${plugins.dir}/indexer-solr/src/java/" />
          <source path="${plugins.dir}/indexer-elastic/src/java/" />
@@ -51,23 +50,339 @@ Index: build.xml
          <source path="${plugins.dir}/index-metadata/src/java/" />
          <source path="${plugins.dir}/index-more/src/java/" />
          <source path="${plugins.dir}/index-more/src/test/" />
+Index: conf/nutch-default.xml
+===================================================================
+--- conf/nutch-default.xml	(revision 1715901)
++++ conf/nutch-default.xml	(working copy)
+@@ -1935,5 +1935,41 @@
+     or outlinks.
+   </description>
+ </property>
++  
++<!-- Memex CDR Properties -->
++<property>
++  <name>memex.cdr.cluster</name>
++  <value></value>
++  <description>
++  </description>
++</property>
+ 
++<property>
++  <name>memex.cdr.username</name>
++  <value></value>
++  <description>
++  </description>
++</property>
++
++<property>
++  <name>memex.cdr.password</name>
++  <value></value>
++  <description>
++  </description>
++</property>
++
++<property>
++  <name>memex.cdr.index</name>
++  <value></value>
++  <description>
++  </description>
++</property>
++
++<property>
++  <name>memex.cdr.type</name>
++  <value></value>
++  <description>
++  </description>
++</property>
++
+ </configuration>
 Index: ivy/ivy.xml
 ===================================================================
---- ivy/ivy.xml	(revision 1693468)
+--- ivy/ivy.xml	(revision 1715901)
 +++ ivy/ivy.xml	(working copy)
-@@ -34,6 +34,9 @@
- 	</publications>
- 	
- 	<dependencies>
-+		
-+		<dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1.1" />
-+		
- 		<dependency org="org.slf4j" name="slf4j-api" rev="1.6.1"
- 			conf="*->master" />
- 		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1"
+@@ -1,131 +1,166 @@
+ <?xml version="1.0" ?>
+ 
+ <!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor 
+-	license agreements. See the NOTICE file distributed with this work for additional 
+-	information regarding copyright ownership. The ASF licenses this file to 
+-	You under the Apache License, Version 2.0 (the "License"); you may not use 
+-	this file except in compliance with the License. You may obtain a copy of 
+-	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
+-	by applicable law or agreed to in writing, software distributed under the 
+-	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
+-	OF ANY KIND, either express or implied. See the License for the specific 
+-	language governing permissions and limitations under the License. -->
++  license agreements. See the NOTICE file distributed with this work for additional 
++  information regarding copyright ownership. The ASF licenses this file to 
++  You under the Apache License, Version 2.0 (the "License"); you may not use 
++  this file except in compliance with the License. You may obtain a copy of 
++  the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
++  by applicable law or agreed to in writing, software distributed under the 
++  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
++  OF ANY KIND, either express or implied. See the License for the specific 
++  language governing permissions and limitations under the License. -->
+ 
+ <ivy-module version="1.0">
+-	<info organisation="org.apache.nutch" module="nutch">
+-		<license name="Apache 2.0"
+-			url="http://www.apache.org/licenses/LICENSE-2.0.txt/" />
+-		<ivyauthor name="Apache Nutch Team" url="http://nutch.apache.org" />
+-		<description homepage="http://nutch.apache.org">Nutch is an open source web-search
+-			software. It builds on
+-			Hadoop, Tika and Solr, adding web-specifics,
+-			such as a crawler, a link-graph
+-			database etc.
+-		</description>
+-	</info>
+-	
+-	<configurations>
+-		<include file="${basedir}/ivy/ivy-configurations.xml" />
+-	</configurations>
+-	
+-	<publications>
+-		<!--get the artifact from our module name -->
+-		<artifact conf="master" />
+-	</publications>
+-	
+-	<dependencies>
+-		<dependency org="org.slf4j" name="slf4j-api" rev="1.6.1" conf="*->master" />
+-		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" conf="*->master" />
+-		
+-		<!--dependency org="log4j" name="log4j" rev="1.2.15" conf="*->default">
+-			<exclude org="javax.jms" name="jms" />
+-			<exclude org="com.sun.jdmk" name="jmxtools" />
+-			<exclude org="com.sun.jmx" name="jmxri" />
+-		</dependency-->
+-		
+-		<dependency org="commons-lang" name="commons-lang" rev="2.6" conf="*->default" />
+-		<dependency org="commons-collections" name="commons-collections" rev="3.2.1" conf="*->master" />
+-		<dependency org="commons-httpclient" name="commons-httpclient" rev="3.1" conf="*->master" />
+-		<dependency org="commons-codec" name="commons-codec" rev="1.10" conf="*->default" />
+-        <dependency org="org.apache.commons" name="commons-compress" rev="1.9" conf="*->default" />
+-        <dependency org="org.apache.commons" name="commons-jexl" rev="2.1.1" />
+-            
+-        <!-- Hadoop Dependencies -->
+-		<dependency org="org.apache.hadoop" name="hadoop-common" rev="2.4.0" conf="*->default">
+-			<exclude org="hsqldb" name="hsqldb" />
+-			<exclude org="net.sf.kosmosfs" name="kfs" />
+-			<exclude org="net.java.dev.jets3t" name="jets3t" />
+-			<exclude org="org.eclipse.jdt" name="core" />
+-			<exclude org="org.mortbay.jetty" name="jsp-*" />
+-			<exclude org="ant" name="ant" />
+-		</dependency>
+-        <dependency org="org.apache.hadoop" name="hadoop-hdfs" rev="2.4.0" conf="*->default"/>
+-        <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-core" rev="2.4.0" conf="*->default"/>
+-        <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" rev="2.4.0" conf="*->default"/>
+-        <!-- End of Hadoop Dependencies -->
++  <info organisation="org.apache.nutch" module="nutch">
++    <license name="Apache 2.0"
++      url="http://www.apache.org/licenses/LICENSE-2.0.txt/" />
++    <ivyauthor name="Apache Nutch Team" url="http://nutch.apache.org" />
++    <description homepage="http://nutch.apache.org">Nutch is an open source web-search
++      software. It builds on
++      Hadoop, Tika and Solr, adding web-specifics,
++      such as a crawler, a link-graph
++      database etc.
++    </description>
++  </info>
+ 
+-		<dependency org="org.apache.tika" name="tika-core" rev="1.10" />
+-		<dependency org="com.ibm.icu" name="icu4j" rev="55.1" />
++  <configurations>
++    <include file="${basedir}/ivy/ivy-configurations.xml" />
++  </configurations>
+ 
+-		<dependency org="xerces" name="xercesImpl" rev="2.9.1" />
+-		<dependency org="xerces" name="xmlParserAPIs" rev="2.6.2" />
+-		<dependency org="oro" name="oro" rev="2.0.8" />
++  <publications>
++    <!--get the artifact from our module name -->
++    <artifact conf="master" />
++  </publications>
+ 
+-		<dependency org="com.google.guava" name="guava" rev="16.0.1" />
++  <dependencies>
++    <dependency org="org.slf4j" name="slf4j-api" rev="1.6.1"
++      conf="*->master" />
++    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1"
++      conf="*->master" />
++      
++    <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1.1"
++      conf="*->default" />
+ 
+-		<dependency org="com.github.crawler-commons" name="crawler-commons" rev="0.6" />
++    <dependency org="commons-lang" name="commons-lang" rev="2.6"
++      conf="*->default" />
++    <dependency org="commons-collections" name="commons-collections"
++      rev="3.2.1" conf="*->master" />
++    <dependency org="commons-httpclient" name="commons-httpclient"
++      rev="3.1" conf="*->master" />
++    <dependency org="commons-codec" name="commons-codec" rev="1.10"
++      conf="*->default" />
++    <dependency org="org.apache.commons" name="commons-compress"
++      rev="1.9" conf="*->default" />
++    <dependency org="org.apache.commons" name="commons-jexl"
++      rev="2.1.1" />
+ 
+-		<dependency org="com.martinkl.warc" name="warc-hadoop" rev="0.1.0" />
+-		
+-        <!--dependency org="org.apache.cxf" name="cxf" rev="3.0.4" conf="*->default"/-->
+-        <dependency org="org.apache.cxf" name="cxf-rt-frontend-jaxws" rev="3.0.4" conf="*->default"/>
+-        <dependency org="org.apache.cxf" name="cxf-rt-frontend-jaxrs" rev="3.0.4" conf="*->default"/>
+-        <dependency org="org.apache.cxf" name="cxf-rt-transports-http" rev="3.0.4" conf="*->default"/>
+-        <dependency org="org.apache.cxf" name="cxf-rt-transports-http-jetty" rev="3.0.4" conf="*->default"/>
+-        <dependency org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.0.4" conf="test->default"/>
+-        <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.5.1"  conf="*->default"/> 
+-        <dependency org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-cbor" rev="2.5.1" conf="*->default"/>
+-        <dependency org="com.fasterxml.jackson.jaxrs" name="jackson-jaxrs-json-provider" rev="2.5.1" conf="*->default"/>	
+-              
+-		<!-- WARC artifacts needed  -->
+-		<dependency org="org.netpreserve.commons" name="webarchive-commons" rev="1.1.5" conf="*->default">
+-			<exclude module="hadoop-core"/>
+-			<exclude org="com.google.guava"/>
+-		</dependency>
++    <!-- Hadoop Dependencies -->
++    <dependency org="org.apache.hadoop" name="hadoop-common"
++      rev="2.4.0" conf="*->default">
++      <exclude org="hsqldb" name="hsqldb" />
++      <exclude org="net.sf.kosmosfs" name="kfs" />
++      <exclude org="net.java.dev.jets3t" name="jets3t" />
++      <exclude org="org.eclipse.jdt" name="core" />
++      <exclude org="org.mortbay.jetty" name="jsp-*" />
++      <exclude org="ant" name="ant" />
++    </dependency>
++    <dependency org="org.apache.hadoop" name="hadoop-hdfs"
++      rev="2.4.0" conf="*->default" />
++    <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-core"
++      rev="2.4.0" conf="*->default" />
++    <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient"
++      rev="2.4.0" conf="*->default" />
++    <!-- End of Hadoop Dependencies -->
+ 
+-		<!--artifacts needed for testing -->
+-		<dependency org="junit" name="junit" rev="4.11" conf="test->default" />
+-		<dependency org="org.mortbay.jetty" name="jetty-client" rev="6.1.22" conf="test->default" />
+-		<dependency org="org.mortbay.jetty" name="jetty" rev="6.1.22" conf="test->default" />
+-		<dependency org="org.mortbay.jetty" name="jetty-util" rev="6.1.22" conf="test->default" />
+-		<!-- end of test artifacts -->
++    <dependency org="org.apache.tika" name="tika-core" rev="1.10" />
++    <dependency org="com.ibm.icu" name="icu4j" rev="55.1" />
+ 
+-		<!-- web app dependencies -->
++    <dependency org="xerces" name="xercesImpl" rev="2.9.1" />
++    <dependency org="xerces" name="xmlParserAPIs" rev="2.6.2" />
++    <dependency org="oro" name="oro" rev="2.0.8" />
+ 
+-    	<dependency org="org.apache.commons" name="commons-collections4" rev="4.0" conf="*->default" />
+-    	<dependency org="org.springframework" name="spring-core" rev="4.0.4.RELEASE" conf="*->default" />
+-    	<dependency org="org.springframework" name="spring-context" rev="4.0.4.RELEASE" conf="*->default" />
+-    	<dependency org="org.springframework" name="spring-web" rev="4.0.4.RELEASE" conf="*->default" />
++    <dependency org="com.google.guava" name="guava" rev="16.0.1" />
+ 
+-    	<dependency org="com.sun.jersey" name="jersey-client" rev="1.8" conf="*->default" />
+-	
+-    	<dependency org="com.j256.ormlite" name="ormlite-jdbc" rev="4.48" conf="*->default" />
+-    	<dependency org="com.h2database" name="h2" rev="1.4.180" conf="*->default" />
+-    	<dependency org="org.eclipse.persistence" name="javax.persistence" rev="2.0.0" conf="*->default" />
+-	
+-    	<dependency org="org.apache.wicket" name="wicket-core" rev="6.16.0" conf="*->default" />
+-    	<dependency org="org.apache.wicket" name="wicket-spring" rev="6.16.0" conf="*->default" />
+-    	<dependency org="de.agilecoders.wicket" name="wicket-bootstrap-core" rev="0.9.2" conf="*->default" />
+-    	<dependency org="de.agilecoders.wicket" name="wicket-bootstrap-extensions" rev="0.9.2" conf="*->default" />
++    <dependency org="com.github.crawler-commons" name="crawler-commons"
++      rev="0.6" />
+ 
+-		<!--global exclusion -->
+-		<exclude module="jmxtools" />
+-		<exclude module="jms" />
+-		<exclude module="jmxri" />
+-        <exclude org="com.thoughtworks.xstream"/>
+-        <exclude org="org.apache.mrunit"/>
+-        <exclude org="com.thoughtworks.xstream"/>
++    <dependency org="com.martinkl.warc" name="warc-hadoop"
++      rev="0.1.0" />
+ 
+-	</dependencies>
++    <!--dependency org="org.apache.cxf" name="cxf" rev="3.0.4" conf="*->default"/ -->
++    <dependency org="org.apache.cxf" name="cxf-rt-frontend-jaxws"
++      rev="3.0.4" conf="*->default" />
++    <dependency org="org.apache.cxf" name="cxf-rt-frontend-jaxrs"
++      rev="3.0.4" conf="*->default" />
++    <dependency org="org.apache.cxf" name="cxf-rt-transports-http"
++      rev="3.0.4" conf="*->default" />
++    <dependency org="org.apache.cxf" name="cxf-rt-transports-http-jetty"
++      rev="3.0.4" conf="*->default" />
++    <dependency org="org.apache.cxf" name="cxf-rt-rs-client"
++      rev="3.0.4" conf="test->default" />
++    <dependency org="com.fasterxml.jackson.core" name="jackson-databind"
++      rev="2.5.1" conf="*->default" />
++    <dependency org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-cbor"
++      rev="2.5.1" conf="*->default" />
++    <dependency org="com.fasterxml.jackson.jaxrs" name="jackson-jaxrs-json-provider"
++      rev="2.5.1" conf="*->default" />
+ 
++    <!-- WARC artifacts needed -->
++    <dependency org="org.netpreserve.commons" name="webarchive-commons"
++      rev="1.1.5" conf="*->default">
++      <exclude module="hadoop-core" />
++      <exclude org="com.google.guava" />
++    </dependency>
++
++    <!--artifacts needed for testing -->
++    <dependency org="junit" name="junit" rev="4.11" conf="test->default" />
++    <dependency org="org.mortbay.jetty" name="jetty-client"
++      rev="6.1.22" conf="test->default" />
++    <dependency org="org.mortbay.jetty" name="jetty" rev="6.1.22"
++      conf="test->default" />
++    <dependency org="org.mortbay.jetty" name="jetty-util"
++      rev="6.1.22" conf="test->default" />
++    <!-- end of test artifacts -->
++
++    <!-- web app dependencies -->
++
++    <dependency org="org.apache.commons" name="commons-collections4"
++      rev="4.0" conf="*->default" />
++    <dependency org="org.springframework" name="spring-core"
++      rev="4.0.4.RELEASE" conf="*->default" />
++    <dependency org="org.springframework" name="spring-context"
++      rev="4.0.4.RELEASE" conf="*->default" />
++    <dependency org="org.springframework" name="spring-web"
++      rev="4.0.4.RELEASE" conf="*->default" />
++
++    <dependency org="com.sun.jersey" name="jersey-client"
++      rev="1.8" conf="*->default" />
++
++    <dependency org="com.j256.ormlite" name="ormlite-jdbc"
++      rev="4.48" conf="*->default" />
++    <dependency org="com.h2database" name="h2" rev="1.4.180"
++      conf="*->default" />
++    <dependency org="org.eclipse.persistence" name="javax.persistence"
++      rev="2.0.0" conf="*->default" />
++
++    <dependency org="org.apache.wicket" name="wicket-core"
++      rev="6.16.0" conf="*->default" />
++    <dependency org="org.apache.wicket" name="wicket-spring"
++      rev="6.16.0" conf="*->default" />
++    <dependency org="de.agilecoders.wicket" name="wicket-bootstrap-core"
++      rev="0.9.2" conf="*->default" />
++    <dependency org="de.agilecoders.wicket" name="wicket-bootstrap-extensions"
++      rev="0.9.2" conf="*->default" />
++
++    <!--global exclusion -->
++    <exclude module="jmxtools" />
++    <exclude module="jms" />
++    <exclude module="jmxri" />
++    <exclude org="com.thoughtworks.xstream" />
++    <exclude org="org.apache.mrunit" />
++    <exclude org="com.thoughtworks.xstream" />
++
++  </dependencies>
++
+ </ivy-module>
 Index: ivy/ivysettings.xml
 ===================================================================
---- ivy/ivysettings.xml	(revision 1693468)
+--- ivy/ivysettings.xml	(revision 1715901)
 +++ ivy/ivysettings.xml	(working copy)
 @@ -28,6 +28,9 @@
    <property name="oss.sonatype.org" 
@@ -116,9 +431,9 @@ Index: ivy/ivysettings.xml
    <modules>
 Index: src/bin/nutch
 ===================================================================
---- src/bin/nutch	(revision 1693468)
+--- src/bin/nutch	(revision 1715901)
 +++ src/bin/nutch	(working copy)
-@@ -128,11 +128,12 @@
+@@ -132,11 +132,12 @@
  
  JAVA="$JAVA_HOME/bin/java"
  JAVA_HEAP_MAX=-Xmx1000m 
@@ -134,86 +449,9 @@ Index: src/bin/nutch
  
 Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1693468)
+--- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1715901)
 +++ src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(working copy)
-@@ -22,6 +22,8 @@
- 
- import org.slf4j.Logger;
- import org.slf4j.LoggerFactory;
-+import org.apache.commons.codec.binary.Base64;
-+import org.apache.commons.codec.binary.StringUtils;
- import org.apache.hadoop.conf.Configured;
- import org.apache.hadoop.fs.FileSystem;
- import org.apache.hadoop.fs.Path;
-@@ -48,12 +50,13 @@
- import org.apache.nutch.parse.ParseData;
- import org.apache.nutch.parse.ParseImpl;
- import org.apache.nutch.parse.ParseText;
-+import org.apache.nutch.protocol.Content;
- import org.apache.nutch.scoring.ScoringFilterException;
- import org.apache.nutch.scoring.ScoringFilters;
- 
- public class IndexerMapReduce extends Configured implements
--    Mapper<Text, Writable, Text, NutchWritable>,
--    Reducer<Text, NutchWritable, Text, NutchIndexAction> {
-+Mapper<Text, Writable, Text, NutchWritable>,
-+Reducer<Text, NutchWritable, Text, NutchIndexAction> {
- 
-   public static final Logger LOG = LoggerFactory
-       .getLogger(IndexerMapReduce.class);
-@@ -64,10 +67,12 @@
-   public static final String INDEXER_SKIP_NOTMODIFIED = "indexer.skip.notmodified";
-   public static final String URL_FILTERING = "indexer.url.filters";
-   public static final String URL_NORMALIZING = "indexer.url.normalizers";
-+  public static final String INDEXER_BINARY_AS_BASE64 = "indexer.binary.base64";
- 
-   private boolean skip = false;
-   private boolean delete = false;
-   private boolean deleteRobotsNoIndex = false;
-+  private boolean base64 = false;
-   private IndexingFilters filters;
-   private ScoringFilters scfilters;
- 
-@@ -91,6 +96,7 @@
-     this.deleteRobotsNoIndex = job.getBoolean(INDEXER_DELETE_ROBOTS_NOINDEX,
-         false);
-     this.skip = job.getBoolean(INDEXER_SKIP_NOTMODIFIED, false);
-+    this.base64 = job.getBoolean(INDEXER_BINARY_AS_BASE64, false);
- 
-     normalize = job.getBoolean(URL_NORMALIZING, false);
-     filter = job.getBoolean(URL_FILTERING, false);
-@@ -159,7 +165,7 @@
- 
-   public void map(Text key, Writable value,
-       OutputCollector<Text, NutchWritable> output, Reporter reporter)
--      throws IOException {
-+          throws IOException {
- 
-     String urlString = filterUrl(normalizeUrl(key.toString()));
-     if (urlString == null) {
-@@ -173,10 +179,11 @@
- 
-   public void reduce(Text key, Iterator<NutchWritable> values,
-       OutputCollector<Text, NutchIndexAction> output, Reporter reporter)
--      throws IOException {
-+          throws IOException {
-     Inlinks inlinks = null;
-     CrawlDatum dbDatum = null;
-     CrawlDatum fetchDatum = null;
-+    Content content = null;
-     ParseData parseData = null;
-     ParseText parseText = null;
- 
-@@ -219,6 +226,8 @@
-         }
-       } else if (value instanceof ParseText) {
-         parseText = (ParseText) value;
-+      } else if (value instanceof Content) {
-+        content = (Content)value;
-       } else if (LOG.isWarnEnabled()) {
-         LOG.warn("Unrecognized type: " + value.getClass());
-       }
-@@ -267,15 +276,15 @@
+@@ -275,15 +275,15 @@
      }
  
      NutchDocument doc = new NutchDocument();
@@ -232,148 +470,30 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
      final Parse parse = new ParseImpl(parseText, parseData);
      try {
-@@ -325,8 +334,21 @@
-     // apply boost to all indexed fields.
-     doc.setWeight(boost);
-     // store boost for use by explain and dedup
--    doc.add("boost", Float.toString(boost));
-+    //doc.add("boost", Float.toString(boost));
+@@ -347,7 +347,7 @@
+         binary = Base64.encodeBase64String(StringUtils.getBytesUtf8(binary));
+       }
  
-+    if (content != null) {
-+      // Get the original unencoded content
-+      String binary = new String(content.getContent());
-+
-+      // optionally encode as base64
-+      if (base64) {
-+        binary = Base64.encodeBase64String(StringUtils.getBytesUtf8(binary));
-+      }
-+
-+      //doc.add("binaryContent", binary);
+-      doc.add("binaryContent", binary);
 +      doc.add("raw_content", binary);
-+    }
-+
-     reporter.incrCounter("IndexerStatus", "indexed (add/update)", 1);
- 
-     NutchIndexAction action = new NutchIndexAction(doc, NutchIndexAction.ADD);
-@@ -337,7 +359,7 @@
-   }
- 
-   public static void initMRJob(Path crawlDb, Path linkDb,
--      Collection<Path> segments, JobConf job) {
-+      Collection<Path> segments, JobConf job, boolean addBinaryContent) {
- 
-     LOG.info("IndexerMapReduce: crawldb: " + crawlDb);
- 
-@@ -352,6 +374,10 @@
-           CrawlDatum.PARSE_DIR_NAME));
-       FileInputFormat.addInputPath(job, new Path(segment, ParseData.DIR_NAME));
-       FileInputFormat.addInputPath(job, new Path(segment, ParseText.DIR_NAME));
-+
-+      if (addBinaryContent) {
-+        FileInputFormat.addInputPath(job, new Path(segment, Content.DIR_NAME));
-+      }
      }
  
-     FileInputFormat.addInputPath(job, new Path(crawlDb, CrawlDb.CURRENT_NAME));
+     reporter.incrCounter("IndexerStatus", "indexed (add/update)", 1);
 Index: src/java/org/apache/nutch/indexer/IndexingJob.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1693468)
+--- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1715901)
 +++ src/java/org/apache/nutch/indexer/IndexingJob.java	(working copy)
-@@ -83,7 +83,23 @@
-   public void index(Path crawlDb, Path linkDb, List<Path> segments,
-       boolean noCommit, boolean deleteGone, String params, boolean filter,
-       boolean normalize) throws IOException {
-+    index(crawlDb, linkDb, segments, noCommit, deleteGone, params, false,
-+        false, false);
-+  }
- 
-+  public void index(Path crawlDb, Path linkDb, List<Path> segments,
-+      boolean noCommit, boolean deleteGone, String params,
-+      boolean filter, boolean normalize, boolean addBinaryContent) throws IOException {
-+    index(crawlDb, linkDb, segments, noCommit, deleteGone, params, false,
-+        false, false, false);
-+  }
-+
-+  public void index(Path crawlDb, Path linkDb, List<Path> segments,
-+      boolean noCommit, boolean deleteGone, String params,
-+      boolean filter, boolean normalize, boolean addBinaryContent,
-+      boolean base64) throws IOException {
-+
-+
-     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-     long start = System.currentTimeMillis();
-     LOG.info("Indexer: starting at " + sdf.format(start));
-@@ -94,11 +110,17 @@
-     LOG.info("Indexer: deleting gone documents: " + deleteGone);
-     LOG.info("Indexer: URL filtering: " + filter);
-     LOG.info("Indexer: URL normalizing: " + normalize);
--
-+    if (addBinaryContent) {
-+      if (base64) {
-+        LOG.info("Indexer: adding binary content as Base64");
-+      } else {
-+        LOG.info("Indexer: adding binary content");
-+      }
-+    }        
-     IndexWriters writers = new IndexWriters(getConf());
-     LOG.info(writers.describe());
- 
--    IndexerMapReduce.initMRJob(crawlDb, linkDb, segments, job);
-+    IndexerMapReduce.initMRJob(crawlDb, linkDb, segments, job, addBinaryContent);
- 
-     // NOW PASSED ON THE COMMAND LINE AS A HADOOP PARAM
-     // job.set(SolrConstants.SERVER_URL, solrUrl);
-@@ -106,6 +128,7 @@
-     job.setBoolean(IndexerMapReduce.INDEXER_DELETE, deleteGone);
-     job.setBoolean(IndexerMapReduce.URL_FILTERING, filter);
-     job.setBoolean(IndexerMapReduce.URL_NORMALIZING, normalize);
-+    job.setBoolean(IndexerMapReduce.INDEXER_BINARY_AS_BASE64, base64);
- 
-     if (params != null) {
-       job.set(IndexerMapReduce.INDEXER_PARAMS, params);
-@@ -141,7 +164,8 @@
+@@ -165,7 +165,6 @@
    public int run(String[] args) throws Exception {
      if (args.length < 2) {
        System.err
--      .println("Usage: Indexer <crawldb> [-linkdb <linkdb>] [-params k1=v1&k2=v2...] (<segment> ... | -dir <segments>) [-noCommit] [-deleteGone] [-filter] [-normalize]");
-+      //.println("Usage: Indexer <crawldb> [-linkdb <linkdb>] [-params k1=v1&k2=v2...] (<segment> ... | -dir <segments>) [-noCommit] [-deleteGone] [-filter] [-normalize]");
-+      .println("Usage: Indexer <crawldb> [-linkdb <linkdb>] [-params k1=v1&k2=v2...] (<segment> ... | -dir <segments>) [-noCommit] [-deleteGone] [-filter] [-normalize] [-addBinaryContent] [-base64]");
+-      //.println("Usage: Indexer <crawldb> [-linkdb <linkdb>] [-params k1=v1&k2=v2...] (<segment> ... | -dir <segments>) [-noCommit] [-deleteGone] [-filter] [-normalize]");
+       .println("Usage: Indexer <crawldb> [-linkdb <linkdb>] [-params k1=v1&k2=v2...] (<segment> ... | -dir <segments>) [-noCommit] [-deleteGone] [-filter] [-normalize] [-addBinaryContent] [-base64]");
        IndexWriters writers = new IndexWriters(getConf());
        System.err.println(writers.describe());
-       return -1;
-@@ -157,6 +181,8 @@
-     boolean deleteGone = false;
-     boolean filter = false;
-     boolean normalize = false;
-+    boolean addBinaryContent = false;
-+    boolean base64 = false;
- 
-     for (int i = 1; i < args.length; i++) {
-       if (args[i].equals("-linkdb")) {
-@@ -180,6 +206,10 @@
-         filter = true;
-       } else if (args[i].equals("-normalize")) {
-         normalize = true;
-+      } else if (args[i].equals("-addBinaryContent")) {
-+        addBinaryContent = true;
-+      } else if (args[i].equals("-base64")) {
-+        base64 = true;
-       } else if (args[i].equals("-params")) {
-         params = args[++i];
-       } else {
-@@ -188,8 +218,7 @@
-     }
- 
-     try {
--      index(crawlDb, linkDb, segments, noCommit, deleteGone, params, filter,
--          normalize);
-+      index(crawlDb, linkDb, segments, noCommit, deleteGone, params, filter, normalize, addBinaryContent, base64);
-       return 0;
-     } catch (final Exception e) {
-       LOG.error("Indexer: " + StringUtils.stringifyException(e));
 Index: src/java/org/apache/nutch/indexer/NutchDocument.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/NutchDocument.java	(revision 1693468)
+--- src/java/org/apache/nutch/indexer/NutchDocument.java	(revision 1715901)
 +++ src/java/org/apache/nutch/indexer/NutchDocument.java	(working copy)
 @@ -30,6 +30,7 @@
  import org.apache.hadoop.io.Writable;
@@ -383,27 +503,9 @@ Index: src/java/org/apache/nutch/indexer/NutchDocument.java
  
  /** A {@link NutchDocument} is the unit of indexing. */
  public class NutchDocument implements Writable,
-@@ -141,4 +142,17 @@
-     sb.append("}\n");
-     return sb.toString();
-   }
-+  
-+  public String toJSON() {
-+    JSONObject json = new JSONObject();
-+    json.put("url", fields.get("url").getValues().get(0).toString().replaceAll("\\\\", ""));
-+    json.put("timestamp", JSONObject.escape(fields.get("timestamp").getValues().get(0).toString()));
-+    json.put("team", JSONObject.escape(fields.get("team").getValues().get(0).toString()));
-+    json.put("crawler", JSONObject.escape(fields.get("crawler").getValues().get(0).toString()));
-+    json.put("content_type", JSONObject.escape(fields.get("content_type").getValues().get(0).toString()));
-+    json.put("raw_content", JSONObject.escape(fields.get("raw_content").getValues().get(0).toString()));
-+//    json.put("crawl_data", JSONValue.toJSONString(fields.get("crawl_data").getValues().get(0)));    
-+
-+    return json.toJSONString();
-+  }
- }
 Index: src/plugin/build.xml
 ===================================================================
---- src/plugin/build.xml	(revision 1693468)
+--- src/plugin/build.xml	(revision 1715901)
 +++ src/plugin/build.xml	(working copy)
 @@ -33,6 +33,7 @@
       <ant dir="index-anchor" target="deploy"/>
@@ -413,7 +515,7 @@ Index: src/plugin/build.xml
       <ant dir="index-replace" target="deploy"/>
       <ant dir="index-static" target="deploy"/>
       <ant dir="index-metadata" target="deploy"/>
-@@ -40,6 +41,7 @@
+@@ -42,6 +43,7 @@
       <ant dir="indexer-dummy" target="deploy"/>
       <ant dir="indexer-elastic" target="deploy"/>
       <ant dir="indexer-solr" target="deploy"/>
@@ -421,7 +523,7 @@ Index: src/plugin/build.xml
       <ant dir="language-identifier" target="deploy"/>
       <ant dir="lib-http" target="deploy"/>
       <ant dir="lib-nekohtml" target="deploy"/>
-@@ -138,6 +140,7 @@
+@@ -142,6 +144,7 @@
      <ant dir="index-anchor" target="clean"/>
      <ant dir="index-geoip" target="clean"/>
      <ant dir="index-more" target="clean"/>
@@ -429,8 +531,8 @@ Index: src/plugin/build.xml
      <ant dir="index-static" target="clean"/>
      <ant dir="index-replace" target="clean"/>
      <ant dir="index-metadata" target="clean"/>
-@@ -144,6 +147,7 @@
-     <ant dir="mimetype-filter" target="clean"/>
+@@ -150,6 +153,7 @@
+     <ant dir="indexer-cloudsearch" target="clean"/>
      <ant dir="indexer-dummy" target="clean"/>
      <ant dir="indexer-elastic" target="clean"/>
 +    <ant dir="indexer-memex" target="clean"/>
@@ -561,7 +663,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 ===================================================================
 --- src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(working copy)
-@@ -0,0 +1,142 @@
+@@ -0,0 +1,215 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -580,45 +682,34 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 + */
 +package org.apache.nutch.index.memex.atf;
 +
-+import java.util.ArrayList;
-+import java.util.Arrays;
++import java.io.BufferedReader;
++import java.io.IOException;
++import java.net.MalformedURLException;
 +import java.util.HashMap;
-+import java.util.List;
-+
++import java.util.Locale;
++import org.apache.commons.codec.digest.DigestUtils;
++import org.apache.commons.lang.StringUtils;
 +import org.apache.hadoop.conf.Configuration;
 +import org.apache.hadoop.io.Text;
++import org.apache.hadoop.io.Writable;
 +import org.apache.nutch.crawl.CrawlDatum;
 +import org.apache.nutch.crawl.Inlinks;
 +import org.apache.nutch.indexer.IndexingException;
 +import org.apache.nutch.indexer.IndexingFilter;
 +import org.apache.nutch.indexer.NutchDocument;
++import org.apache.nutch.net.protocols.Response;
 +import org.apache.nutch.parse.Parse;
++import org.apache.nutch.util.MimeUtil;
++import org.apache.nutch.util.TableUtil;
 +import org.apache.tika.Tika;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
 +/**
 + * <p>An {@link org.apache.nutch.indexer.IndexingFilter} which augments
-+ * {@link org.apache.nutch.indexer.NutchDocument}'s with the following
-+ * additional fields</p>
-+ * <pre>
-+ * {@code
-+ *  {
-+ *   url : <url of raw page>,
-+ *   timestamp: <timestamp for data when scraped, in epoch milliseconds>,
-+ *   team: <name of crawling team>,
-+ *   crawler: <name of crawler; each type of crawler should have a distinct name or reference>,
-+ *   raw_content: <full text of raw crawled page>,
-+ *   content_type: <IANA mimetype representing the crawl_data content>,
-+ *   crawl_data {
-+ *     content: <optional; used to store cleaned/processed text, etc>,
-+ *     images:[an array of URIs to the images present within the document],
-+ *     videos:[an array of URIs to the videos present within the document]
-+ *   }
-+ *  }
-+ * }
-+ * </pre>
-+ * <p>This plugin is specific to the Memex ATF domain task and is use used
++ * {@link org.apache.nutch.indexer.NutchDocument}'s with the 
++ * <a href="https://www.memexproxy.com/wiki/display/MPM/CDR+Schema">following additional fields</a></p>
++ * <p>This plugin is specific to the Memex domains tasks and is used
 + * specifically to augment documents prior to them being indexed into a master
 + * ElasticSearch cluster.</p>
 + */
@@ -626,29 +717,14 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +
 +  public static final Logger LOG = LoggerFactory
 +      .getLogger(MemexATFIndexingFilter.class);
++
 +  private Configuration conf;
 +
-+  private String[] IMAGES = {"video/x-flv", "video/mp4", "application/x-mpegURL", 
-+      "video/MP2T", "video/3gpp", "video/quicktime", "video/x-msvideo", "video/x-ms-wmv"};
++  private MimeUtil MIME;
 +
-+  private String[] VIDEOS = {"image/gif", "image/jpeg", "image/pjpeg", "image/png", "image/bmp",
-+      "image/svg+xml", "image/tiff", "image/vnd.djvu"};
++  private HashMap<String, String> mimeMap = null;
 +
-+  /**
-+   * @see org.apache.hadoop.conf.Configurable#getConf()
-+   */
-+  @Override
-+  public Configuration getConf() {
-+    return this.conf;
-+  }
-+
-+  /**
-+   * @see org.apache.hadoop.conf.Configurable#setConf(org.apache.hadoop.conf.Configuration)
-+   */
-+  @Override
-+  public void setConf(Configuration conf) {
-+    this.conf = conf;
-+  }
++  private boolean mapMimes = false;
 +
 +  /**
 +   * 
@@ -671,36 +747,135 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +  public NutchDocument filter(NutchDocument doc, Parse parse, Text url,
 +      CrawlDatum datum, Inlinks inlinks) throws IndexingException {
 +    Tika tika = new Tika();
-+    doc.add("url", url);
-+    doc.add("timestamp", datum.getFetchTime());
-+    doc.add("team", "NASA_JPL");
-+    doc.add("crawler", conf.get("http.agent.version", "Nutch-1.11-SNAPSHOT"));
-+    doc.add("content_type", tika.detect(url.toString()));
-+    HashMap<String, ArrayList<String>> crawlMap = new HashMap<String, ArrayList<String>>();
++    doc.add("_id", (DigestUtils.sha256Hex(url.getBytes() + "-" + datum.getFetchTime())).toUpperCase(Locale.getDefault()));
++    if (datum.getMetaData().containsKey("parent")) {
++      doc.add("_parent", datum.getMetaData().get("_parent"));
++    } else {
++      doc.add("_parent", DigestUtils.sha256Hex(inlinks.iterator().next().getFromUrl().getBytes())); // + "-" + datum.getFetchTime()).toUpperCase(Locale.getDefault())
++    }
++    doc.add("adjudication", (short)0);
++    doc.add("annotation1", (short)0);
++    doc.add("annotation2", (short)0);
 +
-+    crawlMap.put("content", new ArrayList<String>(Arrays.asList(parse.getText())));
++    //get content_type
++    String mimeType = null;
++    String contentType = null;
 +
-+    if (inlinks != null) {
-+      List<String> linksList = Arrays.asList(inlinks.getAnchors());
-+      ArrayList<String> images = new ArrayList<String>();
-+      ArrayList<String> videos = new ArrayList<String>();
-+
-+      for (int i = 0; i < linksList.size(); i++) {
-+        String mimeType = null;
-+        mimeType = tika.detect(linksList.get(i));
-+        if (Arrays.asList(IMAGES).contains(mimeType)) {
-+          images.add(linksList.get(i));
-+        } else if (Arrays.asList(VIDEOS).contains(mimeType)) {
-+          videos.add(linksList.get(i));
-+        }
-+      }
-+      crawlMap.put("images", images);
-+      crawlMap.put("videos", videos);
++    Writable tcontentType = datum.getMetaData().get(
++        new Text(Response.CONTENT_TYPE));
++    if (tcontentType != null) {
++      contentType = tcontentType.toString();
++    } else
++      contentType = parse.getData().getMeta(Response.CONTENT_TYPE);
++    if (contentType == null) {
++      mimeType = tika.detect(url.toString());
++    } else {
++      mimeType = MIME.forName(MimeUtil.cleanMimeType(contentType));
 +    }
 +
++    // Checks if we solved the content-type.
++    if (mimeType == null) {
++      return doc;
++    }
 +
-+    doc.add("crawl_data", crawlMap);
++    // Check if we have to map mime types
++    if (mapMimes) {
++      // Check if the current mime is mapped
++      if (mimeMap.containsKey(mimeType)) {
++        // It's mapped, let's replace it
++        mimeType = mimeMap.get(mimeType);
++      }
++    }
++
++    contentType = mimeType;
++    doc.add("content_type", contentType);
++    doc.add("crawl_data", parse.getData().getContentMeta().toString());
++    doc.add("crawler", "Nutch-1.11-SNAPSHOT");
++    doc.add("extracted_metadata", parse.getData().getParseMeta().toString());
++    doc.add("extracted_text", parse.getText());
++    doc.add("obj_original_url", url.toString());
++
++    if (contentType.trim() != "text/html" || contentType.trim() != "application/xhtml+xml") {
++      String[] reversedURL = null;
++      try {
++        reversedURL = TableUtil.reverseUrl(url.toString()).split(":");
++      } catch (MalformedURLException e) {
++        e.printStackTrace();
++      }
++      reversedURL[0] = reversedURL[0].replace('.', '/');
++
++      // URLs with content at a folder level and nested below that
++      // run into problems when dumping. For example:
++      //
++      // www.foo.com/bar/
++      // www.foo.com/bar/about.html
++      //
++      // One of these will fail to dump depending on processing order.
++      // To address this, we will use a placeholder when dumping a URL
++      // such as the one ending in '/bar/'
++      String lastDir = reversedURL[reversedURL.length - 1];
++      if (! lastDir.contains(".")) {
++        if (lastDir.charAt(lastDir.length() - 1) != '/') {
++          reversedURL[reversedURL.length - 1] += '/';
++        }
++        reversedURL[reversedURL.length - 1] += "_file";
++      }
++
++      String reversedURLPath = org.apache.commons.lang3.StringUtils.join(reversedURL, "/");
++      doc.add("obj_stored_url", "https://crawl-jpl.s3.amazonaws.com/obj_stored_url" + reversedURLPath);
++    } else {
++      doc.add("obj_stored_url", "");
++    }
++
++    doc.add("team", "NASA_JPL");
++    doc.add("timestamp", datum.getFetchTime());
++    doc.add("url", url.toString());
++    doc.add("version", (float)2.0);
++
 +    return doc;
++  }
++
++  public void setConf(Configuration conf) {
++    this.conf = conf;
++    MIME = new MimeUtil(conf);
++
++    if (conf.getBoolean("moreIndexingFilter.mapMimeTypes", false) == true) {
++      mapMimes = true;
++
++      // Load the mapping
++      try {
++        readConfiguration();
++      } catch (Exception e) {
++        LOG.error(org.apache.hadoop.util.StringUtils.stringifyException(e));
++      }
++    }
++  }
++
++  public Configuration getConf() {
++    return this.conf;
++  }
++
++  private void readConfiguration() throws IOException {
++    BufferedReader reader = new BufferedReader(
++        conf.getConfResourceAsReader("contenttype-mapping.txt"));
++    String line;
++    String parts[];
++
++    mimeMap = new HashMap<String, String>();
++
++    while ((line = reader.readLine()) != null) {
++      if (StringUtils.isNotBlank(line) && !line.startsWith("#")) {
++        line.trim();
++        parts = line.split("\t");
++
++        // Must be at least two parts
++        if (parts.length > 1) {
++          for (int i = 1; i < parts.length; i++) {
++            mimeMap.put(parts[i].trim(), parts[0].trim());
++          }
++        }
++      }
++    }
 +  }
 +
 +}
@@ -891,7 +1066,7 @@ Index: src/plugin/indexer-memex/ivy.xml
 +  </publications>
 +
 +  <dependencies>
-+    <dependency org="io.searchbox" name="jest" rev="0.1.6"
++    <dependency org="io.searchbox" name="jest" rev="2.0.0"
 +        conf="*->default"/>
 +  </dependencies>
 +  
@@ -900,7 +1075,7 @@ Index: src/plugin/indexer-memex/plugin.xml
 ===================================================================
 --- src/plugin/indexer-memex/plugin.xml	(revision 0)
 +++ src/plugin/indexer-memex/plugin.xml	(working copy)
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,75 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<!--
 +  Licensed to the Apache Software Foundation (ASF) under one or more
@@ -918,7 +1093,7 @@ Index: src/plugin/indexer-memex/plugin.xml
 +  See the License for the specific language governing permissions and
 +  limitations under the License.
 +-->
-+<plugin id="indexer-memex" name="ElasticIndexWriter" version="1.0.0"
++<plugin id="indexer-memex" name="MemexIndexWriter" version="1.0.0"
 +  provider-name="nutch.apache.org">
 +
 +  <runtime>
@@ -926,18 +1101,42 @@ Index: src/plugin/indexer-memex/plugin.xml
 +      <export name="*" />
 +    </library>
 +    
-+    <library name="commons-codec-1.9.jar"/>
-+    <library name="commons-lang3-3.4.jar"/>
-+    <library name="commons-logging-1.2.jar"/>
-+    <library name="gson-2.3.1.jar"/>
-+    <library name="guava-18.0.jar"/>
-+    <library name="httpasyncclient-4.1.jar"/>
-+    <library name="httpclient-4.4.1.jar"/>
-+    <library name="httpcore-4.4.1.jar"/>
-+    <library name="httpcore-nio-4.4.1.jar"/>
-+    <library name="jest-0.1.6.jar"/>
-+    <library name="jest-common-0.1.6.jar"/>
-+    <library name="slf4j-api-1.7.12.jar"/>
++    <library name="commons-codec-1.9.jar">
++      <export name="*"/>
++    </library>
++    <library name="commons-lang3-3.4.jar">
++      <export name="*"/>
++    </library>
++    <library name="commons-logging-1.2.jar">
++      <export name="*"/>
++    </library>
++    <library name="gson-2.4.jar">
++      <export name="*"/>
++    </library>
++    <library name="guava-18.0.jar">
++      <export name="*"/>
++    </library>
++    <library name="httpasyncclient-4.1.1.jar">
++      <export name="*"/>
++    </library>
++    <library name="httpclient-4.5.1.jar">
++      <export name="*"/>
++    </library>
++    <library name="httpcore-4.4.4.jar">
++      <export name="*"/>
++    </library>
++    <library name="httpcore-nio-4.4.4.jar">
++      <export name="*"/>
++    </library>
++    <library name="jest-2.0.0.jar">
++      <export name="*"/>
++    </library>
++    <library name="jest-common-2.0.0.jar">
++      <export name="*"/>
++    </library>
++    <library name="slf4j-api-1.7.13.jar">
++      <export name="*"/>
++    </library>
 +  </runtime>
 +
 +  <requires>
@@ -956,7 +1155,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
 +++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(working copy)
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,171 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -975,47 +1174,29 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 + */
 +package org.apache.nutch.indexwriter.memex;
 +
++import io.searchbox.action.BulkableAction;
 +import io.searchbox.client.JestClient;
 +import io.searchbox.client.JestClientFactory;
-+import io.searchbox.client.JestResult;
 +import io.searchbox.client.config.HttpClientConfig;
 +import io.searchbox.core.Bulk;
 +import io.searchbox.core.Index;
 +
 +import java.io.IOException;
 +import java.util.ArrayList;
-+import java.util.Arrays;
++import java.util.LinkedHashMap;
 +import java.util.List;
++import java.util.Map;
 +
 +import org.apache.hadoop.conf.Configuration;
 +import org.apache.hadoop.mapred.JobConf;
 +import org.apache.nutch.indexer.IndexWriter;
 +import org.apache.nutch.indexer.NutchDocument;
-+import org.apache.solr.common.SolrInputDocument;
-+import org.slf4j.Logger;
-+import org.slf4j.LoggerFactory;
 +
 +/**
 + * <p>An {@link org.apache.nutch.indexer.IndexingWriter} which writes
 + * {@link org.apache.nutch.indexer.NutchDocument}'s into an ElasticSearch
 + * index in the following schema. This schema is defined within the 
 + * {@link org.apache.nutch.index.memex.atf.MemexATFIndexingFilter}</p>
-+ * <pre>
-+ * {@code
-+ *  {
-+ *   url : <url of raw page>,
-+ *   timestamp: <timestamp for data when scraped, in epoch milliseconds>,
-+ *   team: <name of crawling team>,
-+ *   crawler: <name of crawler; each type of crawler should have a distinct name or reference>,
-+ *   raw_content: <full text of raw crawled page>,
-+ *   content_type: <IANA mimetype representing the crawl_data content>,
-+ *   crawl_data {
-+ *     content: <optional; used to store cleaned/processed text, etc>,
-+ *     images:[an array of URIs to the images present within the document],
-+ *     videos:[an array of URIs to the videos present within the document]
-+ *   }
-+ * }
-+ * </pre>
 + * <p>This plugin is specific to the Memex ATF domain task and is use used
 + * specifically to augment documents prior to them being indexed into a master
 + * ElasticSearch cluster.</p>
@@ -1028,10 +1209,8 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +
 +  private Configuration config;
 +
-+  private static Logger LOG = LoggerFactory.getLogger(MemexIndexWriter.class);
++  private final List<Map<String, Object>> inputDocs = new ArrayList<Map<String, Object>>();
 +
-+  private final List<NutchDocument> inputDocs = new ArrayList<NutchDocument>();
-+  
 +  private int batchSize = 50;
 +
 +
@@ -1053,14 +1232,17 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +
 +
 +  /**
++   * 
 +   * @see org.apache.nutch.indexer.IndexWriter#open(org.apache.hadoop.mapred.JobConf, java.lang.String)
 +   */
 +  @Override
 +  public void open(JobConf job, String name) throws IOException {
 +    factory = new JestClientFactory();
 +    factory.setHttpClientConfig(new HttpClientConfig.
-+        Builder("https://els.istresearch.com:9200").multiThreaded(true)
-+        .defaultCredentials("memex", "j9fd0LK8.a6olH24U7X81").connTimeout(300000).build());
++        Builder(job.get(MemexConstants.CLUSTER)).multiThreaded(true)
++        .defaultCredentials(job.get(MemexConstants.USERNAME), job.get(MemexConstants.PASSWORD))
++        .connTimeout(300000)
++        .build());
 +    client = factory.getObject();
 +  }
 +
@@ -1069,21 +1251,25 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +   */
 +  @Override
 +  public void write(NutchDocument doc) throws IOException {
-+
-+    Bulk bulk = new Bulk.Builder()
-+    .defaultIndex("memex-domains")
-+    .defaultType("autonomy")
-+    .addAction(Arrays.asList(
-+        new Index.Builder(doc.toJSON()).build()))
-+        .build();
-+    inputDocs.add(doc);
++    buildElasticDocument(doc);
 +    if (inputDocs.size() > batchSize) {
-+      JestResult result = client.execute(bulk);
-+      LOG.info(result.getJsonString());
-+      LOG.info(result.getErrorMessage());
-+      LOG.info(result.getPathToResult());
++      Bulk bulk = new Bulk.Builder()
++          .defaultIndex(getConf().get(MemexConstants.INDEX))
++          .defaultType(getConf().get(MemexConstants.TYPE))
++          .addAction((BulkableAction<?>) inputDocs)
++          .build();
++      client.execute(bulk);
++    }
++  }
++
++  @SuppressWarnings("unchecked")
++  private void buildElasticDocument(NutchDocument doc) throws IOException {
++    Map<String, Object> source = new LinkedHashMap<String, Object>();
++    for (String docField : doc.getFieldNames()) {
++      source.put(doc.getField(docField).toString(), doc.getFieldValue(docField));
 +    }
 +
++    inputDocs.add((Map<String, Object>) new Index.Builder(source).build());
 +  }
 +
 +  /* (non-Javadoc)
@@ -1121,13 +1307,23 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +
 +  }
 +
-+  /* (non-Javadoc)
++  /**
 +   * @see org.apache.nutch.indexer.IndexWriter#describe()
 +   */
 +  @Override
 +  public String describe() {
-+    // TODO Auto-generated method stub
-+    return null;
++    StringBuffer sb = new StringBuffer("MemexIndexWriter\n");
++    sb.append("\t").append(MemexConstants.CLUSTER)
++    .append(" : URL of the Memex Elastic Search cluster to be connecting with.\n");
++    sb.append("\t").append(MemexConstants.INDEX)
++    .append(" : the collection of documents that have somewhat similar characteristics.\n");
++    sb.append("\t").append(MemexConstants.PASSWORD)
++    .append(" : password for authentication\n");
++    sb.append("\t").append(MemexConstants.TYPE)
++    .append(" : the logical category/partition of the index we wish to write documents to\n");
++    sb.append("\t").append(MemexConstants.USERNAME)
++    .append(" : username for authentication\n");
++    return sb.toString();
 +  }
 +
 +}
