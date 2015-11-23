@@ -8,13 +8,47 @@ $ cp memex_atf_plugin.patch nutch_trunk
 $ cd nutch_trunk
 $ patch -p0 -i memex_atf_plugin.patch
 ```
-At this stage you need to open the following 
+At this stage you need to open the following file
 ```
-$ vim src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java
+$ vim conf/nutch-default.xml
 ```
-Make sure that you populate the username and password parameters of the following functional call
+Make sure that you populate the following configuration properties
 ```
-.defaultCredentials("", "").build()); //insert your credentials here
+<!-- Memex CDR Properties -->
+<property>
+  <name>memex.cdr.cluster</name>
+  <value></value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>memex.cdr.username</name>
+  <value></value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>memex.cdr.password</name>
+  <value></value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>memex.cdr.index</name>
+  <value></value>
+  <description>
+  </description>
+</property>
+
+<property>
+  <name>memex.cdr.type</name>
+  <value></value>
+  <description>
+  </description>
+</property>
 ``` 
 After that you can safely build Nutch source
 ```
