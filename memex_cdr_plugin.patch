@@ -1151,6 +1151,49 @@ Index: src/plugin/indexer-memex/plugin.xml
 +  </extension>
 +
 +</plugin>
+Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexConstants.java
+===================================================================
+--- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexConstants.java	(revision 0)
++++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexConstants.java	(working copy)
+@@ -0,0 +1,38 @@
++/*
++ * Licensed to the Apache Software Foundation (ASF) under one or more
++ * contributor license agreements.  See the NOTICE file distributed with
++ * this work for additional information regarding copyright ownership.
++ * The ASF licenses this file to You under the Apache License, Version 2.0
++ * (the "License"); you may not use this file except in compliance with
++ * the License.  You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.apache.nutch.indexwriter.memex;
++
++/**
++ * Configuration properties for the indexer-memex plugin.
++ * These are utilized from within 
++ * {@link org.apache.nutch.indexwriter.memex.MemexIndexWriter}
++ */
++public interface MemexConstants {
++
++  public static final String MEMEX_PREFIX = "memex.";
++
++  public static final String CLUSTER = MEMEX_PREFIX + "cdr.cluster";
++
++  public static final String USERNAME = MEMEX_PREFIX + "cdr.username";
++
++  public static final String PASSWORD = MEMEX_PREFIX + "cdr.password";
++
++  public static final String INDEX = MEMEX_PREFIX + "cdr.index";
++
++  public static final String TYPE = MEMEX_PREFIX + "cdr.type";
++
++}
 Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
