@@ -50,6 +50,22 @@ Index: build.xml
          <source path="${plugins.dir}/index-metadata/src/java/" />
          <source path="${plugins.dir}/index-more/src/java/" />
          <source path="${plugins.dir}/index-more/src/test/" />
+Index: conf/log4j.properties
+===================================================================
+--- conf/log4j.properties	(revision 1715901)
++++ conf/log4j.properties	(working copy)
+@@ -59,9 +59,11 @@
+ log4j.logger.org.apache.nutch.tools.CrawlDBScanner=INFO,cmdstdout
+ log4j.logger.org.apache.nutch.protocol.RobotRulesParser=INFO,cmdstdout
+ log4j.logger.org.apache.nutch.plugin.PluginRepository=WARN
++log4j.logger.org.apache.nutch.indexwriter.memex.MemexIndexWriter=INFO,cmdstdout
+ 
+ log4j.logger.org.apache.nutch=INFO
+ log4j.logger.org.apache.hadoop=WARN
++log4j.logger.io.searchbox=DEBUG
+ 
+ #
+ # Daily Rolling File Appender
 Index: conf/nutch-default.xml
 ===================================================================
 --- conf/nutch-default.xml	(revision 1715901)
@@ -437,7 +453,7 @@ Index: src/bin/nutch
  
  JAVA="$JAVA_HOME/bin/java"
  JAVA_HEAP_MAX=-Xmx1000m 
-+NUTCH_HEAPSIZE=6000
++#NUTCH_HEAPSIZE=6000
  
  # check envvars which might override default args
  if [ "$NUTCH_HEAPSIZE" != "" ]; then
@@ -1227,7 +1243,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
 +++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(working copy)
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,215 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1249,8 +1265,10 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +import io.searchbox.client.JestClient;
 +import io.searchbox.client.JestClientFactory;
 +import io.searchbox.client.JestResult;
++import io.searchbox.client.JestResultHandler;
 +import io.searchbox.client.config.HttpClientConfig;
 +import io.searchbox.core.Bulk;
++import io.searchbox.core.Delete;
 +import io.searchbox.core.Index;
 +
 +import java.io.IOException;
@@ -1286,11 +1304,13 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +
 +  private final List<io.searchbox.core.Index> inputDocs = new ArrayList<io.searchbox.core.Index>();
 +
-+  private int batchSize = 500;
++  private int batchSize = 100;
 +
 +  private static final Logger LOG = LoggerFactory.getLogger(MemexIndexWriter.class);
 +
 +  private int count = 0;
++
++  private Bulk bulk;
 +
 +  /**
 +   * @see org.apache.hadoop.conf.Configurable#getConf()
@@ -1331,7 +1351,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +  public void write(NutchDocument doc) throws IOException {
 +    buildElasticDocument(doc);
 +    if (inputDocs.size() > batchSize) {
-+      Bulk bulk = new Bulk.Builder()
++      bulk = new Bulk.Builder()
 +          .defaultIndex(getConf().get(MemexConstants.INDEX))
 +          .defaultType(getConf().get(MemexConstants.TYPE))
 +          .addAction(inputDocs)
@@ -1340,8 +1360,8 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +      if (!result.isSucceeded()) {
 +        LOG.error("IndexDocumentCommand::the bulk operation to index documents failed with message: {}", result.getErrorMessage());
 +      } else {
-+        count = count + 50;
-+        LOG.error("IndexDocumentCommand::the bulk operation to index documents succeeded with message: {}. Indexed {} documents so far.", result.getJsonString(), count);
++        count = count + 100;
++        LOG.info("IndexDocumentCommand::the bulk operation to index documents succeeded with message: {}. Indexed {} documents so far.", result.getJsonString(), count);
 +      }
 +    }
 +  }
@@ -1355,13 +1375,15 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +    LOG.info("Built and added document to index batch.");
 +  }
 +
-+  /* (non-Javadoc)
++  /**
 +   * @see org.apache.nutch.indexer.IndexWriter#delete(java.lang.String)
 +   */
 +  @Override
 +  public void delete(String key) throws IOException {
-+    // TODO Auto-generated method stub
-+
++    client.execute(new Delete.Builder(key)
++        .index(getConf().get(MemexConstants.INDEX))
++        .type(getConf().get(MemexConstants.TYPE))
++        .build());
 +  }
 +
 +  /**
@@ -1369,25 +1391,52 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +   */
 +  @Override
 +  public void update(NutchDocument doc) throws IOException {
-+    write(doc);;
-+
++    write(doc);
 +  }
 +
-+  /* (non-Javadoc)
++  /**
 +   * @see org.apache.nutch.indexer.IndexWriter#commit()
 +   */
 +  @Override
 +  public void commit() throws IOException {
-+    // TODO Auto-generated method stub
-+
++    if (client != null) {
++      JestResult result = client.execute(bulk);
++      if (!result.isSucceeded()) {
++        LOG.error("Failure in bulk commit: {}", result.getErrorMessage());
++      }
++      bulk = null;
++    }
++    if (bulk != null) {
++      if (inputDocs.size() > 0) {
++        // start a flush, note that this is an asynchronous call
++        client.executeAsync(bulk, new JestResultHandler<JestResult>() {
++          @Override
++          public void completed(JestResult result) {
++            LOG.info("Successful asynchronous flush of {} pending documents.", inputDocs.size());
++          }
++          @Override
++          public void failed(Exception ex) {
++            LOG.error("Failed asynchronous flush of {} pending documents. {}", inputDocs.size(), ex);
++          }
++        });
++      }
++      bulk = null;
++    }
 +  }
 +
-+  /* (non-Javadoc)
++  /**
 +   * @see org.apache.nutch.indexer.IndexWriter#close()
 +   */
 +  @Override
 +  public void close() throws IOException {
-+
++    // Flush pending requests
++    LOG.info("Processing remaining requests [docs = {} of total docs = {}]", inputDocs.size(), count);
++    commit();
++    // flush one more time to finalize the last bulk
++    LOG.info("Processing to finalize last execute");
++    commit();
++    // Close
++    client.shutdownClient();
 +  }
 +
 +  /**
