@@ -70,6 +70,24 @@ Index: conf/nutch-default.xml
 ===================================================================
 --- conf/nutch-default.xml	(revision 1715901)
 +++ conf/nutch-default.xml	(working copy)
+@@ -1092,7 +1092,7 @@
+ 
+ <property>
+   <name>plugin.folders</name>
+-  <value>plugins</value>
++  <value>/usr/local/trunk_new1/runtime/local/plugins</value>
+   <description>Directories where nutch plugins are located.  Each
+   element may be a relative or absolute path.  If absolute, it is used
+   as is.  If relative, it is searched for on the classpath.</description>
+@@ -1109,7 +1109,7 @@
+ 
+ <property>
+   <name>plugin.includes</name>
+-  <value>protocol-http|urlfilter-regex|parse-(html|tika)|index-(basic|anchor)|indexer-solr|scoring-opic|urlnormalizer-(pass|regex|basic)</value>
++  <value>protocol-http|urlfilter-regex|parse-(html|tika)|index-memex-atf|indexer-memex|scoring-opic|urlnormalizer-(pass|regex|basic)</value>
+   <description>Regular expression naming plugin directory names to
+   include.  Any plugin not matching this expression is excluded.
+   In any case you need at least include the nutch-extensionpoints plugin. By
 @@ -1935,5 +1935,41 @@
      or outlinks.
    </description>
@@ -708,7 +726,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 ===================================================================
 --- src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(working copy)
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,219 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -793,10 +811,14 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +      CrawlDatum datum, Inlinks inlinks) throws IndexingException {
 +    Tika tika = new Tika();
 +    doc.add("_id", (DigestUtils.sha256Hex(url.getBytes() + "-" + datum.getFetchTime())).toUpperCase(Locale.getDefault()));
-+    if (datum.getMetaData().containsKey("parent")) {
-+      doc.add("_parent", datum.getMetaData().get("_parent"));
++    if (datum.getMetaData().containsKey("_parent")) {
++      doc.add("_parent", datum.getMetaData().get("_parent").toString());
 +    } else {
-+      doc.add("_parent", DigestUtils.sha256Hex(inlinks.iterator().next().getFromUrl().getBytes())); // + "-" + datum.getFetchTime()).toUpperCase(Locale.getDefault())
++      if (inlinks != null && inlinks.size() > 0) {
++        doc.add("_parent", DigestUtils.sha256Hex(inlinks.iterator().next().getFromUrl().getBytes())); // + "-" + datum.getFetchTime()).toUpperCase(Locale.getDefault())
++      } else {
++        doc.add("_parent", "");
++      }
 +    }
 +    doc.add("adjudication", (short)0);
 +    doc.add("annotation1", (short)0);
@@ -1243,7 +1265,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
 +++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(working copy)
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,220 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1360,7 +1382,6 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +      if (!result.isSucceeded()) {
 +        LOG.error("IndexDocumentCommand::the bulk operation to index documents failed with message: {}", result.getErrorMessage());
 +      } else {
-+        count = count + 100;
 +        LOG.info("IndexDocumentCommand::the bulk operation to index documents succeeded with message: {}. Indexed {} documents so far.", result.getJsonString(), count);
 +      }
 +    }
@@ -1369,9 +1390,10 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +  private void buildElasticDocument(NutchDocument doc) throws IOException {
 +    Map<String, Object> source = new LinkedHashMap<String, Object>();
 +    for (String docField : doc.getFieldNames()) {
-+      source.put(doc.getField(docField).toString(), doc.getFieldValue(docField));
++      source.put(docField, doc.getFieldValue(docField));
 +    }
 +    inputDocs.add(new Index.Builder(source).build());
++    count++;
 +    LOG.info("Built and added document to index batch.");
 +  }
 +
@@ -1400,6 +1422,11 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +  @Override
 +  public void commit() throws IOException {
 +    if (client != null) {
++      bulk = new Bulk.Builder()
++          .defaultIndex(getConf().get(MemexConstants.INDEX))
++          .defaultType(getConf().get(MemexConstants.TYPE))
++          .addAction(inputDocs)
++          .build();
 +      JestResult result = client.execute(bulk);
 +      if (!result.isSucceeded()) {
 +        LOG.error("Failure in bulk commit: {}", result.getErrorMessage());
