@@ -1,6 +1,6 @@
 Index: build.xml
 ===================================================================
---- build.xml	(revision 1715901)
+--- build.xml	(revision 1717669)
 +++ build.xml	(working copy)
 @@ -177,6 +177,7 @@
        <packageset dir="${plugins.dir}/feed/src/java"/>
@@ -52,12 +52,12 @@ Index: build.xml
          <source path="${plugins.dir}/index-more/src/test/" />
 Index: conf/log4j.properties
 ===================================================================
---- conf/log4j.properties	(revision 1715901)
+--- conf/log4j.properties	(revision 1717669)
 +++ conf/log4j.properties	(working copy)
-@@ -59,9 +59,11 @@
- log4j.logger.org.apache.nutch.tools.CrawlDBScanner=INFO,cmdstdout
- log4j.logger.org.apache.nutch.protocol.RobotRulesParser=INFO,cmdstdout
- log4j.logger.org.apache.nutch.plugin.PluginRepository=WARN
+@@ -57,9 +57,11 @@
+ log4j.logger.org.apache.nutch.segment.SegmentReader=INFO,cmdstdout
+ log4j.logger.org.apache.nutch.tools.FreeGenerator=INFO,cmdstdout
+ log4j.logger.org.apache.nutch.util.domain.DomainStatistics=INFO,cmdstdout
 +log4j.logger.org.apache.nutch.indexwriter.memex.MemexIndexWriter=INFO,cmdstdout
  
  log4j.logger.org.apache.nutch=INFO
@@ -68,9 +68,9 @@ Index: conf/log4j.properties
  # Daily Rolling File Appender
 Index: conf/nutch-default.xml
 ===================================================================
---- conf/nutch-default.xml	(revision 1715901)
+--- conf/nutch-default.xml	(revision 1717669)
 +++ conf/nutch-default.xml	(working copy)
-@@ -1092,7 +1092,7 @@
+@@ -1094,7 +1094,7 @@
  
  <property>
    <name>plugin.folders</name>
@@ -79,7 +79,7 @@ Index: conf/nutch-default.xml
    <description>Directories where nutch plugins are located.  Each
    element may be a relative or absolute path.  If absolute, it is used
    as is.  If relative, it is searched for on the classpath.</description>
-@@ -1109,7 +1109,7 @@
+@@ -1111,7 +1111,7 @@
  
  <property>
    <name>plugin.includes</name>
@@ -88,7 +88,7 @@ Index: conf/nutch-default.xml
    <description>Regular expression naming plugin directory names to
    include.  Any plugin not matching this expression is excluded.
    In any case you need at least include the nutch-extensionpoints plugin. By
-@@ -1935,5 +1935,41 @@
+@@ -1936,5 +1936,41 @@
      or outlinks.
    </description>
  </property>
@@ -130,293 +130,9 @@ Index: conf/nutch-default.xml
 +</property>
 +
  </configuration>
-Index: ivy/ivy.xml
-===================================================================
---- ivy/ivy.xml	(revision 1715901)
-+++ ivy/ivy.xml	(working copy)
-@@ -1,131 +1,166 @@
- <?xml version="1.0" ?>
- 
- <!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor 
--	license agreements. See the NOTICE file distributed with this work for additional 
--	information regarding copyright ownership. The ASF licenses this file to 
--	You under the Apache License, Version 2.0 (the "License"); you may not use 
--	this file except in compliance with the License. You may obtain a copy of 
--	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
--	by applicable law or agreed to in writing, software distributed under the 
--	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
--	OF ANY KIND, either express or implied. See the License for the specific 
--	language governing permissions and limitations under the License. -->
-+  license agreements. See the NOTICE file distributed with this work for additional 
-+  information regarding copyright ownership. The ASF licenses this file to 
-+  You under the Apache License, Version 2.0 (the "License"); you may not use 
-+  this file except in compliance with the License. You may obtain a copy of 
-+  the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
-+  by applicable law or agreed to in writing, software distributed under the 
-+  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
-+  OF ANY KIND, either express or implied. See the License for the specific 
-+  language governing permissions and limitations under the License. -->
- 
- <ivy-module version="1.0">
--	<info organisation="org.apache.nutch" module="nutch">
--		<license name="Apache 2.0"
--			url="http://www.apache.org/licenses/LICENSE-2.0.txt/" />
--		<ivyauthor name="Apache Nutch Team" url="http://nutch.apache.org" />
--		<description homepage="http://nutch.apache.org">Nutch is an open source web-search
--			software. It builds on
--			Hadoop, Tika and Solr, adding web-specifics,
--			such as a crawler, a link-graph
--			database etc.
--		</description>
--	</info>
--	
--	<configurations>
--		<include file="${basedir}/ivy/ivy-configurations.xml" />
--	</configurations>
--	
--	<publications>
--		<!--get the artifact from our module name -->
--		<artifact conf="master" />
--	</publications>
--	
--	<dependencies>
--		<dependency org="org.slf4j" name="slf4j-api" rev="1.6.1" conf="*->master" />
--		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" conf="*->master" />
--		
--		<!--dependency org="log4j" name="log4j" rev="1.2.15" conf="*->default">
--			<exclude org="javax.jms" name="jms" />
--			<exclude org="com.sun.jdmk" name="jmxtools" />
--			<exclude org="com.sun.jmx" name="jmxri" />
--		</dependency-->
--		
--		<dependency org="commons-lang" name="commons-lang" rev="2.6" conf="*->default" />
--		<dependency org="commons-collections" name="commons-collections" rev="3.2.1" conf="*->master" />
--		<dependency org="commons-httpclient" name="commons-httpclient" rev="3.1" conf="*->master" />
--		<dependency org="commons-codec" name="commons-codec" rev="1.10" conf="*->default" />
--        <dependency org="org.apache.commons" name="commons-compress" rev="1.9" conf="*->default" />
--        <dependency org="org.apache.commons" name="commons-jexl" rev="2.1.1" />
--            
--        <!-- Hadoop Dependencies -->
--		<dependency org="org.apache.hadoop" name="hadoop-common" rev="2.4.0" conf="*->default">
--			<exclude org="hsqldb" name="hsqldb" />
--			<exclude org="net.sf.kosmosfs" name="kfs" />
--			<exclude org="net.java.dev.jets3t" name="jets3t" />
--			<exclude org="org.eclipse.jdt" name="core" />
--			<exclude org="org.mortbay.jetty" name="jsp-*" />
--			<exclude org="ant" name="ant" />
--		</dependency>
--        <dependency org="org.apache.hadoop" name="hadoop-hdfs" rev="2.4.0" conf="*->default"/>
--        <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-core" rev="2.4.0" conf="*->default"/>
--        <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient" rev="2.4.0" conf="*->default"/>
--        <!-- End of Hadoop Dependencies -->
-+  <info organisation="org.apache.nutch" module="nutch">
-+    <license name="Apache 2.0"
-+      url="http://www.apache.org/licenses/LICENSE-2.0.txt/" />
-+    <ivyauthor name="Apache Nutch Team" url="http://nutch.apache.org" />
-+    <description homepage="http://nutch.apache.org">Nutch is an open source web-search
-+      software. It builds on
-+      Hadoop, Tika and Solr, adding web-specifics,
-+      such as a crawler, a link-graph
-+      database etc.
-+    </description>
-+  </info>
- 
--		<dependency org="org.apache.tika" name="tika-core" rev="1.10" />
--		<dependency org="com.ibm.icu" name="icu4j" rev="55.1" />
-+  <configurations>
-+    <include file="${basedir}/ivy/ivy-configurations.xml" />
-+  </configurations>
- 
--		<dependency org="xerces" name="xercesImpl" rev="2.9.1" />
--		<dependency org="xerces" name="xmlParserAPIs" rev="2.6.2" />
--		<dependency org="oro" name="oro" rev="2.0.8" />
-+  <publications>
-+    <!--get the artifact from our module name -->
-+    <artifact conf="master" />
-+  </publications>
- 
--		<dependency org="com.google.guava" name="guava" rev="16.0.1" />
-+  <dependencies>
-+    <dependency org="org.slf4j" name="slf4j-api" rev="1.6.1"
-+      conf="*->master" />
-+    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1"
-+      conf="*->master" />
-+      
-+    <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1.1"
-+      conf="*->default" />
- 
--		<dependency org="com.github.crawler-commons" name="crawler-commons" rev="0.6" />
-+    <dependency org="commons-lang" name="commons-lang" rev="2.6"
-+      conf="*->default" />
-+    <dependency org="commons-collections" name="commons-collections"
-+      rev="3.2.1" conf="*->master" />
-+    <dependency org="commons-httpclient" name="commons-httpclient"
-+      rev="3.1" conf="*->master" />
-+    <dependency org="commons-codec" name="commons-codec" rev="1.10"
-+      conf="*->default" />
-+    <dependency org="org.apache.commons" name="commons-compress"
-+      rev="1.9" conf="*->default" />
-+    <dependency org="org.apache.commons" name="commons-jexl"
-+      rev="2.1.1" />
- 
--		<dependency org="com.martinkl.warc" name="warc-hadoop" rev="0.1.0" />
--		
--        <!--dependency org="org.apache.cxf" name="cxf" rev="3.0.4" conf="*->default"/-->
--        <dependency org="org.apache.cxf" name="cxf-rt-frontend-jaxws" rev="3.0.4" conf="*->default"/>
--        <dependency org="org.apache.cxf" name="cxf-rt-frontend-jaxrs" rev="3.0.4" conf="*->default"/>
--        <dependency org="org.apache.cxf" name="cxf-rt-transports-http" rev="3.0.4" conf="*->default"/>
--        <dependency org="org.apache.cxf" name="cxf-rt-transports-http-jetty" rev="3.0.4" conf="*->default"/>
--        <dependency org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.0.4" conf="test->default"/>
--        <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.5.1"  conf="*->default"/> 
--        <dependency org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-cbor" rev="2.5.1" conf="*->default"/>
--        <dependency org="com.fasterxml.jackson.jaxrs" name="jackson-jaxrs-json-provider" rev="2.5.1" conf="*->default"/>	
--              
--		<!-- WARC artifacts needed  -->
--		<dependency org="org.netpreserve.commons" name="webarchive-commons" rev="1.1.5" conf="*->default">
--			<exclude module="hadoop-core"/>
--			<exclude org="com.google.guava"/>
--		</dependency>
-+    <!-- Hadoop Dependencies -->
-+    <dependency org="org.apache.hadoop" name="hadoop-common"
-+      rev="2.4.0" conf="*->default">
-+      <exclude org="hsqldb" name="hsqldb" />
-+      <exclude org="net.sf.kosmosfs" name="kfs" />
-+      <exclude org="net.java.dev.jets3t" name="jets3t" />
-+      <exclude org="org.eclipse.jdt" name="core" />
-+      <exclude org="org.mortbay.jetty" name="jsp-*" />
-+      <exclude org="ant" name="ant" />
-+    </dependency>
-+    <dependency org="org.apache.hadoop" name="hadoop-hdfs"
-+      rev="2.4.0" conf="*->default" />
-+    <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-core"
-+      rev="2.4.0" conf="*->default" />
-+    <dependency org="org.apache.hadoop" name="hadoop-mapreduce-client-jobclient"
-+      rev="2.4.0" conf="*->default" />
-+    <!-- End of Hadoop Dependencies -->
- 
--		<!--artifacts needed for testing -->
--		<dependency org="junit" name="junit" rev="4.11" conf="test->default" />
--		<dependency org="org.mortbay.jetty" name="jetty-client" rev="6.1.22" conf="test->default" />
--		<dependency org="org.mortbay.jetty" name="jetty" rev="6.1.22" conf="test->default" />
--		<dependency org="org.mortbay.jetty" name="jetty-util" rev="6.1.22" conf="test->default" />
--		<!-- end of test artifacts -->
-+    <dependency org="org.apache.tika" name="tika-core" rev="1.10" />
-+    <dependency org="com.ibm.icu" name="icu4j" rev="55.1" />
- 
--		<!-- web app dependencies -->
-+    <dependency org="xerces" name="xercesImpl" rev="2.9.1" />
-+    <dependency org="xerces" name="xmlParserAPIs" rev="2.6.2" />
-+    <dependency org="oro" name="oro" rev="2.0.8" />
- 
--    	<dependency org="org.apache.commons" name="commons-collections4" rev="4.0" conf="*->default" />
--    	<dependency org="org.springframework" name="spring-core" rev="4.0.4.RELEASE" conf="*->default" />
--    	<dependency org="org.springframework" name="spring-context" rev="4.0.4.RELEASE" conf="*->default" />
--    	<dependency org="org.springframework" name="spring-web" rev="4.0.4.RELEASE" conf="*->default" />
-+    <dependency org="com.google.guava" name="guava" rev="16.0.1" />
- 
--    	<dependency org="com.sun.jersey" name="jersey-client" rev="1.8" conf="*->default" />
--	
--    	<dependency org="com.j256.ormlite" name="ormlite-jdbc" rev="4.48" conf="*->default" />
--    	<dependency org="com.h2database" name="h2" rev="1.4.180" conf="*->default" />
--    	<dependency org="org.eclipse.persistence" name="javax.persistence" rev="2.0.0" conf="*->default" />
--	
--    	<dependency org="org.apache.wicket" name="wicket-core" rev="6.16.0" conf="*->default" />
--    	<dependency org="org.apache.wicket" name="wicket-spring" rev="6.16.0" conf="*->default" />
--    	<dependency org="de.agilecoders.wicket" name="wicket-bootstrap-core" rev="0.9.2" conf="*->default" />
--    	<dependency org="de.agilecoders.wicket" name="wicket-bootstrap-extensions" rev="0.9.2" conf="*->default" />
-+    <dependency org="com.github.crawler-commons" name="crawler-commons"
-+      rev="0.6" />
- 
--		<!--global exclusion -->
--		<exclude module="jmxtools" />
--		<exclude module="jms" />
--		<exclude module="jmxri" />
--        <exclude org="com.thoughtworks.xstream"/>
--        <exclude org="org.apache.mrunit"/>
--        <exclude org="com.thoughtworks.xstream"/>
-+    <dependency org="com.martinkl.warc" name="warc-hadoop"
-+      rev="0.1.0" />
- 
--	</dependencies>
-+    <!--dependency org="org.apache.cxf" name="cxf" rev="3.0.4" conf="*->default"/ -->
-+    <dependency org="org.apache.cxf" name="cxf-rt-frontend-jaxws"
-+      rev="3.0.4" conf="*->default" />
-+    <dependency org="org.apache.cxf" name="cxf-rt-frontend-jaxrs"
-+      rev="3.0.4" conf="*->default" />
-+    <dependency org="org.apache.cxf" name="cxf-rt-transports-http"
-+      rev="3.0.4" conf="*->default" />
-+    <dependency org="org.apache.cxf" name="cxf-rt-transports-http-jetty"
-+      rev="3.0.4" conf="*->default" />
-+    <dependency org="org.apache.cxf" name="cxf-rt-rs-client"
-+      rev="3.0.4" conf="test->default" />
-+    <dependency org="com.fasterxml.jackson.core" name="jackson-databind"
-+      rev="2.5.1" conf="*->default" />
-+    <dependency org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-cbor"
-+      rev="2.5.1" conf="*->default" />
-+    <dependency org="com.fasterxml.jackson.jaxrs" name="jackson-jaxrs-json-provider"
-+      rev="2.5.1" conf="*->default" />
- 
-+    <!-- WARC artifacts needed -->
-+    <dependency org="org.netpreserve.commons" name="webarchive-commons"
-+      rev="1.1.5" conf="*->default">
-+      <exclude module="hadoop-core" />
-+      <exclude org="com.google.guava" />
-+    </dependency>
-+
-+    <!--artifacts needed for testing -->
-+    <dependency org="junit" name="junit" rev="4.11" conf="test->default" />
-+    <dependency org="org.mortbay.jetty" name="jetty-client"
-+      rev="6.1.22" conf="test->default" />
-+    <dependency org="org.mortbay.jetty" name="jetty" rev="6.1.22"
-+      conf="test->default" />
-+    <dependency org="org.mortbay.jetty" name="jetty-util"
-+      rev="6.1.22" conf="test->default" />
-+    <!-- end of test artifacts -->
-+
-+    <!-- web app dependencies -->
-+
-+    <dependency org="org.apache.commons" name="commons-collections4"
-+      rev="4.0" conf="*->default" />
-+    <dependency org="org.springframework" name="spring-core"
-+      rev="4.0.4.RELEASE" conf="*->default" />
-+    <dependency org="org.springframework" name="spring-context"
-+      rev="4.0.4.RELEASE" conf="*->default" />
-+    <dependency org="org.springframework" name="spring-web"
-+      rev="4.0.4.RELEASE" conf="*->default" />
-+
-+    <dependency org="com.sun.jersey" name="jersey-client"
-+      rev="1.8" conf="*->default" />
-+
-+    <dependency org="com.j256.ormlite" name="ormlite-jdbc"
-+      rev="4.48" conf="*->default" />
-+    <dependency org="com.h2database" name="h2" rev="1.4.180"
-+      conf="*->default" />
-+    <dependency org="org.eclipse.persistence" name="javax.persistence"
-+      rev="2.0.0" conf="*->default" />
-+
-+    <dependency org="org.apache.wicket" name="wicket-core"
-+      rev="6.16.0" conf="*->default" />
-+    <dependency org="org.apache.wicket" name="wicket-spring"
-+      rev="6.16.0" conf="*->default" />
-+    <dependency org="de.agilecoders.wicket" name="wicket-bootstrap-core"
-+      rev="0.9.2" conf="*->default" />
-+    <dependency org="de.agilecoders.wicket" name="wicket-bootstrap-extensions"
-+      rev="0.9.2" conf="*->default" />
-+
-+    <!--global exclusion -->
-+    <exclude module="jmxtools" />
-+    <exclude module="jms" />
-+    <exclude module="jmxri" />
-+    <exclude org="com.thoughtworks.xstream" />
-+    <exclude org="org.apache.mrunit" />
-+    <exclude org="com.thoughtworks.xstream" />
-+
-+  </dependencies>
-+
- </ivy-module>
 Index: ivy/ivysettings.xml
 ===================================================================
---- ivy/ivysettings.xml	(revision 1715901)
+--- ivy/ivysettings.xml	(revision 1717669)
 +++ ivy/ivysettings.xml	(working copy)
 @@ -28,6 +28,9 @@
    <property name="oss.sonatype.org" 
@@ -465,7 +181,7 @@ Index: ivy/ivysettings.xml
    <modules>
 Index: src/bin/nutch
 ===================================================================
---- src/bin/nutch	(revision 1715901)
+--- src/bin/nutch	(revision 1717669)
 +++ src/bin/nutch	(working copy)
 @@ -132,11 +132,12 @@
  
@@ -483,7 +199,7 @@ Index: src/bin/nutch
  
 Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1715901)
+--- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1717669)
 +++ src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(working copy)
 @@ -275,15 +275,15 @@
      }
@@ -533,7 +249,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
        FileInputFormat.addInputPath(job, new Path(segment,
 Index: src/java/org/apache/nutch/indexer/IndexingJob.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1715901)
+--- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1717669)
 +++ src/java/org/apache/nutch/indexer/IndexingJob.java	(working copy)
 @@ -165,7 +165,6 @@
    public int run(String[] args) throws Exception {
@@ -554,21 +270,9 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
          }
        }     
      }
-Index: src/java/org/apache/nutch/indexer/NutchDocument.java
-===================================================================
---- src/java/org/apache/nutch/indexer/NutchDocument.java	(revision 1715901)
-+++ src/java/org/apache/nutch/indexer/NutchDocument.java	(working copy)
-@@ -30,6 +30,7 @@
- import org.apache.hadoop.io.Writable;
- import org.apache.hadoop.io.WritableUtils;
- import org.apache.nutch.metadata.Metadata;
-+import org.json.simple.JSONObject;
- 
- /** A {@link NutchDocument} is the unit of indexing. */
- public class NutchDocument implements Writable,
 Index: src/plugin/build.xml
 ===================================================================
---- src/plugin/build.xml	(revision 1715901)
+--- src/plugin/build.xml	(revision 1717669)
 +++ src/plugin/build.xml	(working copy)
 @@ -33,6 +33,7 @@
       <ant dir="index-anchor" target="deploy"/>
@@ -633,7 +337,7 @@ Index: src/plugin/index-memex-atf/ivy.xml
 ===================================================================
 --- src/plugin/index-memex-atf/ivy.xml	(revision 0)
 +++ src/plugin/index-memex-atf/ivy.xml	(working copy)
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,42 @@
 +<?xml version="1.0" ?>
 +
 +<!--
@@ -672,6 +376,7 @@ Index: src/plugin/index-memex-atf/ivy.xml
 +  </publications>
 +
 +  <dependencies>
++    <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1.1" />
 +  </dependencies>
 +  
 +</ivy-module>
@@ -679,7 +384,7 @@ Index: src/plugin/index-memex-atf/plugin.xml
 ===================================================================
 --- src/plugin/index-memex-atf/plugin.xml	(revision 0)
 +++ src/plugin/index-memex-atf/plugin.xml	(working copy)
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,45 @@
 +<!--
 + Licensed to the Apache Software Foundation (ASF) under one or more
 + contributor license agreements.  See the NOTICE file distributed with
@@ -707,6 +412,9 @@ Index: src/plugin/index-memex-atf/plugin.xml
 +      <library name="index-memex-atf.jar">
 +         <export name="*"/>
 +      </library>
++      <library name="json-simple-1.1.1.jar">i
++        <export name="*"/>
++      </library>
 +   </runtime>
 +
 +   <requires>
@@ -726,7 +434,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 ===================================================================
 --- src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(working copy)
-@@ -0,0 +1,219 @@
+@@ -0,0 +1,231 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -760,11 +468,13 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +import org.apache.nutch.indexer.IndexingException;
 +import org.apache.nutch.indexer.IndexingFilter;
 +import org.apache.nutch.indexer.NutchDocument;
++import org.apache.nutch.metadata.Metadata;
 +import org.apache.nutch.net.protocols.Response;
 +import org.apache.nutch.parse.Parse;
 +import org.apache.nutch.util.MimeUtil;
 +import org.apache.nutch.util.TableUtil;
 +import org.apache.tika.Tika;
++import org.json.simple.JSONObject;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
@@ -856,9 +566,19 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +
 +    contentType = mimeType;
 +    doc.add("content_type", contentType);
-+    doc.add("crawl_data", parse.getData().getContentMeta().toString());
++    Metadata cMd = parse.getData().getContentMeta();
++    JSONObject extractedData = new JSONObject();
++    for(String key : cMd.names()) {
++      extractedData.put(key, cMd.get(key));
++    }
++    doc.add("crawl_data", extractedData);
 +    doc.add("crawler", "Nutch-1.11-SNAPSHOT");
-+    doc.add("extracted_metadata", parse.getData().getParseMeta().toString());
++    Metadata md = parse.getData().getParseMeta();
++    JSONObject extractedMd = new JSONObject();
++    for(String key : md.names()) {
++      extractedMd.put(key, md.get(key));
++    }
++    doc.add("extracted_metadata", extractedMd);
 +    doc.add("extracted_text", parse.getText());
 +    doc.add("obj_original_url", url.toString());
 +
@@ -1133,7 +853,7 @@ Index: src/plugin/indexer-memex/ivy.xml
 +  </publications>
 +
 +  <dependencies>
-+    <dependency org="io.searchbox" name="jest" rev="2.0.0"
++    <dependency org="io.searchbox" name="jest" rev="1.0.0"
 +        conf="*->default"/>
 +  </dependencies>
 +  
@@ -1168,42 +888,42 @@ Index: src/plugin/indexer-memex/plugin.xml
 +      <export name="*" />
 +    </library>
 +    
-+    <library name="commons-codec-1.9.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="commons-lang3-3.4.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="commons-logging-1.2.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="gson-2.4.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="guava-18.0.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="httpasyncclient-4.1.1.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="httpclient-4.5.1.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="httpcore-4.4.4.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="httpcore-nio-4.4.4.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="jest-2.0.0.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="jest-common-2.0.0.jar">
-+      <export name="*"/>
-+    </library>
-+    <library name="slf4j-api-1.7.13.jar">
-+      <export name="*"/>
-+    </library>
++     <library name="commons-codec-1.9.jar">
++       <export name="*"/>
++     </library>
++     <library name="commons-lang3-3.4.jar">
++       <export name="*"/>
++     </library>
++     <library name="commons-logging-1.2.jar">
++       <export name="*"/>
++     </library>
++     <library name="gson-2.4.jar">
++       <export name="*"/>
++     </library>
++     <library name="guava-18.0.jar">
++       <export name="*"/>
++     </library>
++     <library name="httpasyncclient-4.1.1.jar">
++       <export name="*"/>
++     </library>
++     <library name="httpclient-4.5.1.jar">
++       <export name="*"/>
++     </library>
++     <library name="httpcore-4.4.4.jar">
++       <export name="*"/>
++     </library>
++     <library name="httpcore-nio-4.4.4.jar">
++       <export name="*"/>
++     </library>
++     <library name="jest-1.0.0.jar">
++       <export name="*"/>
++     </library>
++     <library name="jest-common-1.0.0.jar">
++       <export name="*"/>
++     </library>
++     <library name="slf4j-api-1.7.13.jar">
++       <export name="*"/>
++     </library>
 +  </runtime>
 +
 +  <requires>
@@ -1265,7 +985,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
 +++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(working copy)
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,221 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1359,7 +1079,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +  public void open(JobConf job, String name) throws IOException {
 +    factory = new JestClientFactory();
 +    factory.setHttpClientConfig(new HttpClientConfig.
-+        Builder(job.get(MemexConstants.CLUSTER)).discoveryEnabled(true).discoveryFrequency(1l, TimeUnit.MINUTES).multiThreaded(true)
++        Builder(job.get(MemexConstants.CLUSTER)).discoveryEnabled(false).discoveryFrequency(1l, TimeUnit.MINUTES).multiThreaded(true)
 +        .defaultCredentials(job.get(MemexConstants.USERNAME), job.get(MemexConstants.PASSWORD))
 +        .connTimeout(300000)
 +        .build());
@@ -1371,6 +1091,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +   */
 +  @Override
 +  public void write(NutchDocument doc) throws IOException {
++    LOG.info(doc.toString());
 +    buildElasticDocument(doc);
 +    if (inputDocs.size() > batchSize) {
 +      bulk = new Bulk.Builder()
