@@ -70,7 +70,19 @@ Index: conf/nutch-default.xml
 ===================================================================
 --- conf/nutch-default.xml	(revision 1717669)
 +++ conf/nutch-default.xml	(working copy)
-@@ -1111,7 +1111,7 @@
+@@ -22,6 +22,11 @@
+ 
+ <configuration>
+ 
++<property>
++  <name>hadoop.tmp.dir</name>
++  <value>/usr/local/memex/hadoop_tmp_dir</value>
++</property>
++
+ <!-- general properties  -->
+ 
+ <property>
+@@ -1111,7 +1116,7 @@
  
  <property>
    <name>plugin.includes</name>
@@ -79,7 +91,7 @@ Index: conf/nutch-default.xml
    <description>Regular expression naming plugin directory names to
    include.  Any plugin not matching this expression is excluded.
    In any case you need at least include the nutch-extensionpoints plugin. By
-@@ -1936,5 +1936,41 @@
+@@ -1936,5 +1941,41 @@
      or outlinks.
    </description>
  </property>
@@ -87,14 +99,14 @@ Index: conf/nutch-default.xml
 +<!-- Memex CDR Properties -->
 +<property>
 +  <name>memex.cdr.cluster</name>
-+  <value></value>
++  <value>http://127.0.0.1:9200</value>
 +  <description>
 +  </description>
 +</property>
  
 +<property>
 +  <name>memex.cdr.username</name>
-+  <value></value>
++  <value>memex</value>
 +  <description>
 +  </description>
 +</property>
@@ -108,14 +120,14 @@ Index: conf/nutch-default.xml
 +
 +<property>
 +  <name>memex.cdr.index</name>
-+  <value></value>
++  <value>memex-domains</value>
 +  <description>
 +  </description>
 +</property>
 +
 +<property>
 +  <name>memex.cdr.type</name>
-+  <value></value>
++  <value>test</value>
 +  <description>
 +  </description>
 +</property>
@@ -977,7 +989,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
 +++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(working copy)
-@@ -0,0 +1,230 @@
+@@ -0,0 +1,232 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1109,9 +1121,11 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +  private void buildElasticDocument(NutchDocument doc) throws IOException {
 +    Map<String, Object> source = new LinkedHashMap<String, Object>();
 +    for (String docField : doc.getFieldNames()) {
-+      source.put(docField, doc.getFieldValue(docField));
++      if (!docField.equals("_id")) {
++        source.put(docField, doc.getFieldValue(docField));
++      }
 +    }
-+    inputDocs.add(new Index.Builder(source).build());
++    inputDocs.add(new Index.Builder(source).id(doc.getFieldValue("_id").toString()).build());
 +    count++;
 +    LOG.info("Built and added document {} to index batch of {}.", count, batchSize);
 +  }
