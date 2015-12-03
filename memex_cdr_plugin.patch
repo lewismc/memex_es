@@ -70,15 +70,6 @@ Index: conf/nutch-default.xml
 ===================================================================
 --- conf/nutch-default.xml	(revision 1717669)
 +++ conf/nutch-default.xml	(working copy)
-@@ -1094,7 +1094,7 @@
- 
- <property>
-   <name>plugin.folders</name>
--  <value>plugins</value>
-+  <value>plugins</value>
-   <description>Directories where nutch plugins are located.  Each
-   element may be a relative or absolute path.  If absolute, it is used
-   as is.  If relative, it is searched for on the classpath.</description>
 @@ -1111,7 +1111,7 @@
  
  <property>
@@ -609,7 +600,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +      }
 +
 +      String reversedURLPath = org.apache.commons.lang3.StringUtils.join(reversedURL, "/");
-+      doc.add("obj_stored_url", "https://crawl-jpl.s3.amazonaws.com/obj_stored_url" + reversedURLPath);
++      doc.add("obj_stored_url", "https://crawl-jpl.s3.amazonaws.com/obj_stored_url/" + reversedURLPath);
 +    } else {
 +      doc.add("obj_stored_url", "");
 +    }
@@ -985,7 +976,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
 +++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(working copy)
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,229 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1010,6 +1001,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +import io.searchbox.client.JestResultHandler;
 +import io.searchbox.client.config.HttpClientConfig;
 +import io.searchbox.core.Bulk;
++import io.searchbox.core.BulkResult;
 +import io.searchbox.core.Delete;
 +import io.searchbox.core.Index;
 +
@@ -1091,19 +1083,23 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +   */
 +  @Override
 +  public void write(NutchDocument doc) throws IOException {
-+    LOG.info(doc.toString());
++    LOG.debug(doc.toString());
 +    buildElasticDocument(doc);
-+    if (inputDocs.size() > batchSize) {
++    if (inputDocs.size() == batchSize) {
++      count = 0;
 +      bulk = new Bulk.Builder()
 +          .defaultIndex(getConf().get(MemexConstants.INDEX))
 +          .defaultType(getConf().get(MemexConstants.TYPE))
 +          .addAction(inputDocs)
 +          .build();
-+      JestResult result = client.execute(bulk);
++      BulkResult result = client.execute(bulk);
 +      if (!result.isSucceeded()) {
-+        LOG.error("IndexDocumentCommand::the bulk operation to index documents failed with message: {}", result.getErrorMessage());
++        LOG.error("Failure in bulk commit: {}", result.getErrorMessage());
++        for (BulkResult.BulkResultItem failedResult : result.getFailedItems()) {
++          LOG.error("Failed result: {}", failedResult.error);
++        }
 +      } else {
-+        LOG.info("IndexDocumentCommand::the bulk operation to index documents succeeded with message: {}. Indexed {} documents so far.", result.getJsonString(), count);
++        LOG.info("Bulk operation to index documents succeeded: {}.", result.getJsonString());
 +      }
 +    }
 +  }
@@ -1115,7 +1111,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +    }
 +    inputDocs.add(new Index.Builder(source).build());
 +    count++;
-+    LOG.info("Built and added document to index batch.");
++    LOG.info("Built and added document {} to index batch of {}.", count, batchSize);
 +  }
 +
 +  /**
@@ -1148,9 +1144,12 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +          .defaultType(getConf().get(MemexConstants.TYPE))
 +          .addAction(inputDocs)
 +          .build();
-+      JestResult result = client.execute(bulk);
++      BulkResult result = client.execute(bulk);
 +      if (!result.isSucceeded()) {
 +        LOG.error("Failure in bulk commit: {}", result.getErrorMessage());
++        for (BulkResult.BulkResultItem failedResult : result.getFailedItems()) {
++          LOG.error("Failed result: {}", failedResult.error);
++        }
 +      }
 +      bulk = null;
 +    }
