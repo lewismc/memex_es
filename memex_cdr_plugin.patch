@@ -58,7 +58,7 @@ Index: conf/log4j.properties
  log4j.logger.org.apache.nutch.segment.SegmentReader=INFO,cmdstdout
  log4j.logger.org.apache.nutch.tools.FreeGenerator=INFO,cmdstdout
  log4j.logger.org.apache.nutch.util.domain.DomainStatistics=INFO,cmdstdout
-+log4j.logger.org.apache.nutch.indexwriter.memex.MemexIndexWriter=INFO,cmdstdout
++log4j.logger.org.apache.nutch.indexwriter.memex.MemexIndexWriter=DEBUG,cmdstdout
  
  log4j.logger.org.apache.nutch=INFO
  log4j.logger.org.apache.hadoop=WARN
@@ -367,7 +367,7 @@ Index: src/plugin/index-memex-atf/ivy.xml
 +  </publications>
 +
 +  <dependencies>
-+    <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1.1" />
++    <dependency org="org.json" name="json" rev="20151123" />
 +  </dependencies>
 +  
 +</ivy-module>
@@ -403,7 +403,7 @@ Index: src/plugin/index-memex-atf/plugin.xml
 +      <library name="index-memex-atf.jar">
 +         <export name="*"/>
 +      </library>
-+      <library name="json-simple-1.1.1.jar">i
++      <library name="json-20151123.jar">i
 +        <export name="*"/>
 +      </library>
 +   </runtime>
@@ -425,7 +425,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 ===================================================================
 --- src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(working copy)
-@@ -0,0 +1,231 @@
+@@ -0,0 +1,232 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -465,7 +465,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +import org.apache.nutch.util.MimeUtil;
 +import org.apache.nutch.util.TableUtil;
 +import org.apache.tika.Tika;
-+import org.json.simple.JSONObject;
++import org.json.JSONObject;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
@@ -511,7 +511,8 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +  public NutchDocument filter(NutchDocument doc, Parse parse, Text url,
 +      CrawlDatum datum, Inlinks inlinks) throws IndexingException {
 +    Tika tika = new Tika();
-+    doc.add("_id", (DigestUtils.sha256Hex(url.getBytes() + "-" + datum.getFetchTime())).toUpperCase(Locale.getDefault()));
++    JSONObject id = new JSONObject();
++    doc.add("_id", id.put("_id", (DigestUtils.sha256Hex(url.getBytes() + "-" + datum.getFetchTime())).toUpperCase(Locale.getDefault())));
 +    if (datum.getMetaData().containsKey("_parent")) {
 +      doc.add("_parent", datum.getMetaData().get("_parent").toString());
 +    } else {
@@ -562,14 +563,14 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +    for(String key : cMd.names()) {
 +      extractedData.put(key, cMd.get(key));
 +    }
-+    doc.add("crawl_data", extractedData);
++    doc.add("crawl_data", extractedData.toString());
 +    doc.add("crawler", "Nutch-1.11-SNAPSHOT");
 +    Metadata md = parse.getData().getParseMeta();
 +    JSONObject extractedMd = new JSONObject();
 +    for(String key : md.names()) {
 +      extractedMd.put(key, md.get(key));
 +    }
-+    doc.add("extracted_metadata", extractedMd);
++    doc.add("extracted_metadata", extractedMd.toString());
 +    doc.add("extracted_text", parse.getText());
 +    doc.add("obj_original_url", url.toString());
 +
@@ -976,7 +977,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 ===================================================================
 --- src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(revision 0)
 +++ src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/MemexIndexWriter.java	(working copy)
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,230 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -1086,12 +1087,13 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +    LOG.debug(doc.toString());
 +    buildElasticDocument(doc);
 +    if (inputDocs.size() == batchSize) {
-+      count = 0;
 +      bulk = new Bulk.Builder()
 +          .defaultIndex(getConf().get(MemexConstants.INDEX))
 +          .defaultType(getConf().get(MemexConstants.TYPE))
 +          .addAction(inputDocs)
 +          .build();
++      inputDocs.clear();
++      count = 0;
 +      BulkResult result = client.execute(bulk);
 +      if (!result.isSucceeded()) {
 +        LOG.error("Failure in bulk commit: {}", result.getErrorMessage());
@@ -1144,6 +1146,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +          .defaultType(getConf().get(MemexConstants.TYPE))
 +          .addAction(inputDocs)
 +          .build();
++      inputDocs.clear();
 +      BulkResult result = client.execute(bulk);
 +      if (!result.isSucceeded()) {
 +        LOG.error("Failure in bulk commit: {}", result.getErrorMessage());
@@ -1176,13 +1179,12 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +   */
 +  @Override
 +  public void close() throws IOException {
-+    // Flush pending requests
-+    LOG.info("Processing remaining requests [docs = {} of total docs = {}]", inputDocs.size(), count);
-+    commit();
-+    // flush one more time to finalize the last bulk
-+    LOG.info("Processing to finalize last execute");
-+    commit();
-+    // Close
++    if (inputDocs.size() > 0) {
++      LOG.info("Processing remaining requests [docs = {} of total docs = {}]", inputDocs.size(), count);
++      commit();
++      LOG.info("Processing to finalize last execute.");
++      commit();
++    }
 +    client.shutdownClient();
 +  }
 +
