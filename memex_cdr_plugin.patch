@@ -82,15 +82,6 @@ Index: conf/nutch-default.xml
  <!-- general properties  -->
  
  <property>
-@@ -1094,7 +1099,7 @@
- 
- <property>
-   <name>plugin.folders</name>
--  <value>plugins</value>
-+  <value>/usr/local/trunk_new1/build/plugins</value>
-   <description>Directories where nutch plugins are located.  Each
-   element may be a relative or absolute path.  If absolute, it is used
-   as is.  If relative, it is searched for on the classpath.</description>
 @@ -1111,7 +1116,7 @@
  
  <property>
@@ -537,7 +528,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +      doc.add("_parent", datum.getMetaData().get("_parent").toString());
 +    } else {
 +      if (inlinks != null && inlinks.size() > 0) {
-+        doc.add("_parent", DigestUtils.sha256Hex(inlinks.iterator().next().getFromUrl().getBytes())); // + "-" + datum.getFetchTime()).toUpperCase(Locale.getDefault())
++        doc.add("_parent", (DigestUtils.sha256Hex(inlinks.iterator().next().getFromUrl().getBytes()).toUpperCase(Locale.getDefault()))); // + "-" + datum.getFetchTime()).toUpperCase(Locale.getDefault())
 +      } else {
 +        doc.add("_parent", "");
 +      }
