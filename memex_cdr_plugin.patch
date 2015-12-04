@@ -82,6 +82,15 @@ Index: conf/nutch-default.xml
  <!-- general properties  -->
  
  <property>
+@@ -1094,7 +1099,7 @@
+ 
+ <property>
+   <name>plugin.folders</name>
+-  <value>plugins</value>
++  <value>/usr/local/trunk_new1/build/plugins</value>
+   <description>Directories where nutch plugins are located.  Each
+   element may be a relative or absolute path.  If absolute, it is used
+   as is.  If relative, it is searched for on the classpath.</description>
 @@ -1111,7 +1116,7 @@
  
  <property>
@@ -99,14 +108,14 @@ Index: conf/nutch-default.xml
 +<!-- Memex CDR Properties -->
 +<property>
 +  <name>memex.cdr.cluster</name>
-+  <value>http://127.0.0.1:9200</value>
++  <value></value>
 +  <description>
 +  </description>
 +</property>
  
 +<property>
 +  <name>memex.cdr.username</name>
-+  <value>memex</value>
++  <value></value>
 +  <description>
 +  </description>
 +</property>
@@ -120,14 +129,14 @@ Index: conf/nutch-default.xml
 +
 +<property>
 +  <name>memex.cdr.index</name>
-+  <value>memex-domains</value>
++  <value></value>
 +  <description>
 +  </description>
 +</property>
 +
 +<property>
 +  <name>memex.cdr.type</name>
-+  <value>test</value>
++  <value></value>
 +  <description>
 +  </description>
 +</property>
@@ -437,7 +446,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 ===================================================================
 --- src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(working copy)
-@@ -0,0 +1,232 @@
+@@ -0,0 +1,231 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -523,8 +532,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +  public NutchDocument filter(NutchDocument doc, Parse parse, Text url,
 +      CrawlDatum datum, Inlinks inlinks) throws IndexingException {
 +    Tika tika = new Tika();
-+    JSONObject id = new JSONObject();
-+    doc.add("_id", id.put("_id", (DigestUtils.sha256Hex(url.getBytes() + "-" + datum.getFetchTime())).toUpperCase(Locale.getDefault())));
++    doc.add("_id", (DigestUtils.sha256Hex(url.getBytes() + "-" + datum.getFetchTime())).toUpperCase(Locale.getDefault()));
 +    if (datum.getMetaData().containsKey("_parent")) {
 +      doc.add("_parent", datum.getMetaData().get("_parent").toString());
 +    } else {
