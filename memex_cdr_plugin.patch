@@ -237,11 +237,46 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
        }
  
 -      doc.add("binaryContent", binary);
-+      doc.add("raw_content", binary);
++      doc.add("raw_content", utf8truncate(binary, 32766));
      }
  
      reporter.incrCounter("IndexerStatus", "indexed (add/update)", 1);
-@@ -368,7 +368,7 @@
+@@ -355,6 +355,34 @@
+     NutchIndexAction action = new NutchIndexAction(doc, NutchIndexAction.ADD);
+     output.collect(key, action);
+   }
++  
++  private static String utf8truncate(String input, int length) {
++    StringBuffer result = new StringBuffer(length);
++    int resultlen = 0;
++    for (int i = 0; i < input.length(); i++) {
++      char c = input.charAt(i);
++      int charlen = 0;
++      if (c <= 0x7f) {
++        charlen = 1;
++      } else if (c <= 0x7ff) {
++        charlen = 2;
++      } else if (c <= 0xd7ff) {
++        charlen = 3;
++      } else if (c <= 0xdbff) {
++        charlen = 4;
++      } else if (c <= 0xdfff) {
++        charlen = 0;
++      } else if (c <= 0xffff) {
++        charlen = 3;
++      }
++      if (resultlen + charlen > length) {
++        break;
++      }
++      result.append(c);
++      resultlen += charlen;
++    }
++    return result.toString();
++  }
+ 
+   public void close() throws IOException {
+   }
+@@ -368,7 +396,7 @@
        LOG.info("IndexerMapReduce: linkdb: {}", linkDb);
  
      for (final Path segment : segments) {
@@ -379,7 +414,7 @@ Index: src/plugin/index-memex-atf/ivy.xml
 +  </publications>
 +
 +  <dependencies>
-+    <dependency org="org.json" name="json" rev="20151123" />
++    <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1.1" />
 +  </dependencies>
 +  
 +</ivy-module>
@@ -415,7 +450,7 @@ Index: src/plugin/index-memex-atf/plugin.xml
 +      <library name="index-memex-atf.jar">
 +         <export name="*"/>
 +      </library>
-+      <library name="json-20151123.jar">i
++      <library name="json-simple-1.1.1.jar">
 +        <export name="*"/>
 +      </library>
 +   </runtime>
@@ -437,7 +472,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 ===================================================================
 --- src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(working copy)
-@@ -0,0 +1,231 @@
+@@ -0,0 +1,232 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -477,7 +512,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +import org.apache.nutch.util.MimeUtil;
 +import org.apache.nutch.util.TableUtil;
 +import org.apache.tika.Tika;
-+import org.json.JSONObject;
++import org.json.simple.JSONObject;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
@@ -519,6 +554,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +   * org.apache.nutch.parse.Parse, org.apache.hadoop.io.Text, org.apache.nutch.crawl.CrawlDatum, 
 +   * org.apache.nutch.crawl.Inlinks)
 +   */
++  @SuppressWarnings("unchecked")
 +  @Override
 +  public NutchDocument filter(NutchDocument doc, Parse parse, Text url,
 +      CrawlDatum datum, Inlinks inlinks) throws IndexingException {
@@ -528,7 +564,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +      doc.add("_parent", datum.getMetaData().get("_parent").toString());
 +    } else {
 +      if (inlinks != null && inlinks.size() > 0) {
-+        doc.add("_parent", (DigestUtils.sha256Hex(inlinks.iterator().next().getFromUrl().getBytes()).toUpperCase(Locale.getDefault()))); // + "-" + datum.getFetchTime()).toUpperCase(Locale.getDefault())
++        doc.add("_parent", (DigestUtils.sha256Hex(inlinks.iterator().next().getFromUrl().getBytes()).toUpperCase(Locale.getDefault())));
 +      } else {
 +        doc.add("_parent", "");
 +      }
@@ -574,14 +610,14 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +    for(String key : cMd.names()) {
 +      extractedData.put(key, cMd.get(key));
 +    }
-+    doc.add("crawl_data", extractedData.toString());
++    doc.add("crawl_data", extractedData);
 +    doc.add("crawler", "Nutch-1.11-SNAPSHOT");
 +    Metadata md = parse.getData().getParseMeta();
 +    JSONObject extractedMd = new JSONObject();
 +    for(String key : md.names()) {
 +      extractedMd.put(key, md.get(key));
 +    }
-+    doc.add("extracted_metadata", extractedMd.toString());
++    doc.add("extracted_metadata", extractedMd);
 +    doc.add("extracted_text", parse.getText());
 +    doc.add("obj_original_url", url.toString());
 +
