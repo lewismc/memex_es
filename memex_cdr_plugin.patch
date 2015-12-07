@@ -204,7 +204,18 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 ===================================================================
 --- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1717669)
 +++ src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(working copy)
-@@ -275,15 +275,15 @@
+@@ -54,8 +54,8 @@
+ import org.apache.nutch.scoring.ScoringFilters;
+ 
+ public class IndexerMapReduce extends Configured implements
+-    Mapper<Text, Writable, Text, NutchWritable>,
+-    Reducer<Text, NutchWritable, Text, NutchIndexAction> {
++Mapper<Text, Writable, Text, NutchWritable>,
++Reducer<Text, NutchWritable, Text, NutchIndexAction> {
+ 
+   public static final Logger LOG = LoggerFactory
+       .getLogger(IndexerMapReduce.class);
+@@ -275,21 +275,21 @@
      }
  
      NutchDocument doc = new NutchDocument();
@@ -223,6 +234,13 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
      final Parse parse = new ParseImpl(parseText, parseData);
      try {
+       // Indexing filters may also be interested in the signature
+       fetchDatum.setSignature(dbDatum.getSignature());
+-      
++
+       // extract information from dbDatum and pass it to
+       // fetchDatum so that indexing filters can use it
+       final Text url = (Text) dbDatum.getMetaData().get(
 @@ -336,7 +336,7 @@
      // apply boost to all indexed fields.
      doc.setWeight(boost);
@@ -232,20 +250,25 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
      if (content != null) {
        // Get the original unencoded content
-@@ -347,7 +347,7 @@
+@@ -346,8 +346,12 @@
+       if (base64) {
          binary = Base64.encodeBase64String(StringUtils.getBytesUtf8(binary));
        }
- 
+-
 -      doc.add("binaryContent", binary);
-+      doc.add("raw_content", utf8truncate(binary, 32766));
++      String contentType = content.getContentType().trim();
++      if (contentType != "text/html" || contentType != "application/xhtml+xml") {
++        doc.add("raw_content", "");
++      } else {
++        doc.add("raw_content", utf8truncate(binary, 32766));
++      }
      }
  
      reporter.incrCounter("IndexerStatus", "indexed (add/update)", 1);
-@@ -355,6 +355,34 @@
-     NutchIndexAction action = new NutchIndexAction(doc, NutchIndexAction.ADD);
+@@ -356,6 +360,34 @@
      output.collect(key, action);
    }
-+  
+ 
 +  private static String utf8truncate(String input, int length) {
 +    StringBuffer result = new StringBuffer(length);
 +    int resultlen = 0;
@@ -273,10 +296,11 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 +    }
 +    return result.toString();
 +  }
- 
++
    public void close() throws IOException {
    }
-@@ -368,7 +396,7 @@
+ 
+@@ -368,7 +400,7 @@
        LOG.info("IndexerMapReduce: linkdb: {}", linkDb);
  
      for (final Path segment : segments) {
