@@ -257,7 +257,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 -
 -      doc.add("binaryContent", binary);
 +      String contentType = content.getContentType().trim();
-+      if (!contentType.contentEquals("text/html") || !contentType.contentEquals("application/xhtml+xml")) {
++      if (!contentType.contains("html") || !contentType.contains("xhtml+xml")) {
 +        doc.add("raw_content", "");
 +      } else {
 +        doc.add("raw_content", utf8truncate(binary, 32766));
@@ -496,7 +496,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 ===================================================================
 --- src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/MemexATFIndexingFilter.java	(working copy)
-@@ -0,0 +1,260 @@
+@@ -0,0 +1,262 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -664,14 +664,16 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +      // To address this, we will use a placeholder when dumping a URL
 +      // such as the one ending in '/bar/'
 +      String lastDir = reversedURL[reversedURL.length - 1];
-+      if (! lastDir.contains(".")) {
-+        if (lastDir.charAt(lastDir.length() - 1) != '/') {
-+          reversedURL[reversedURL.length - 1] += '/';
-+        }
-+        reversedURL[reversedURL.length - 1] += "_file";
-+      }
++      //if (! lastDir.contains(".")) {
++      //if (lastDir.charAt(lastDir.length() - 1) != '/') {
++      //reversedURL[reversedURL.length - 1] += '/';
++      //}
++      //reversedURL[reversedURL.length - 1] += "_file";
++      //}
++      //String reversedURLPath = reversedURL[0] + "/" + reversedURL[1] + "/" + DigestUtils.sha256Hex(url);
++      String reversedURLPath = reversedURL[0] + "/" + DigestUtils.sha256Hex(url.getBytes());
 +
-+      String reversedURLPath = org.apache.commons.lang3.StringUtils.join(reversedURL, "/");
++      //String reversedURLPath = org.apache.commons.lang3.StringUtils.join(reversedURL, "/");
 +      doc.add("obj_stored_url", "https://crawl-jpl.s3.amazonaws.com/obj_stored_url/" + reversedURLPath);
 +    } else {
 +      doc.add("obj_stored_url", "");
@@ -727,7 +729,7 @@ Index: src/plugin/index-memex-atf/src/java/org/apache/nutch/index/memex/atf/Meme
 +      }
 +    }
 +  }
-+  
++
 +  private static String utf8truncate(String input, int length) {
 +    StringBuffer result = new StringBuffer(length);
 +    int resultlen = 0;
