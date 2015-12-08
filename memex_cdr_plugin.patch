@@ -1175,7 +1175,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +    factory.setHttpClientConfig(new HttpClientConfig.
 +        Builder(job.get(MemexConstants.CLUSTER)).discoveryEnabled(false).discoveryFrequency(1l, TimeUnit.MINUTES).multiThreaded(true)
 +        .defaultCredentials(job.get(MemexConstants.USERNAME), job.get(MemexConstants.PASSWORD))
-+        .connTimeout(300000)
++        .connTimeout(300000).readTimeout(300000)
 +        .build());
 +    client = factory.getObject();
 +  }
