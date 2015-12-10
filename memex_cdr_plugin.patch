@@ -1,6 +1,6 @@
 Index: build.xml
 ===================================================================
---- build.xml	(revision 1717669)
+--- build.xml	(revision 1719003)
 +++ build.xml	(working copy)
 @@ -177,6 +177,7 @@
        <packageset dir="${plugins.dir}/feed/src/java"/>
@@ -52,13 +52,13 @@ Index: build.xml
          <source path="${plugins.dir}/index-more/src/test/" />
 Index: conf/log4j.properties
 ===================================================================
---- conf/log4j.properties	(revision 1717669)
+--- conf/log4j.properties	(revision 1719003)
 +++ conf/log4j.properties	(working copy)
 @@ -57,9 +57,11 @@
  log4j.logger.org.apache.nutch.segment.SegmentReader=INFO,cmdstdout
  log4j.logger.org.apache.nutch.tools.FreeGenerator=INFO,cmdstdout
  log4j.logger.org.apache.nutch.util.domain.DomainStatistics=INFO,cmdstdout
-+log4j.logger.org.apache.nutch.indexwriter.memex.MemexIndexWriter=DEBUG,cmdstdout
++log4j.logger.org.apache.nutch.indexwriter.memex.MemexIndexWriter=INFO,cmdstdout
  
  log4j.logger.org.apache.nutch=INFO
  log4j.logger.org.apache.hadoop=WARN
@@ -68,7 +68,7 @@ Index: conf/log4j.properties
  # Daily Rolling File Appender
 Index: conf/nutch-default.xml
 ===================================================================
---- conf/nutch-default.xml	(revision 1717669)
+--- conf/nutch-default.xml	(revision 1719003)
 +++ conf/nutch-default.xml	(working copy)
 @@ -22,6 +22,11 @@
  
@@ -135,7 +135,7 @@ Index: conf/nutch-default.xml
  </configuration>
 Index: ivy/ivysettings.xml
 ===================================================================
---- ivy/ivysettings.xml	(revision 1717669)
+--- ivy/ivysettings.xml	(revision 1719003)
 +++ ivy/ivysettings.xml	(working copy)
 @@ -28,6 +28,9 @@
    <property name="oss.sonatype.org" 
@@ -184,13 +184,13 @@ Index: ivy/ivysettings.xml
    <modules>
 Index: src/bin/nutch
 ===================================================================
---- src/bin/nutch	(revision 1717669)
+--- src/bin/nutch	(revision 1719003)
 +++ src/bin/nutch	(working copy)
 @@ -132,11 +132,12 @@
  
  JAVA="$JAVA_HOME/bin/java"
  JAVA_HEAP_MAX=-Xmx1000m 
-+#NUTCH_HEAPSIZE=6000
++NUTCH_HEAPSIZE=6000m
  
  # check envvars which might override default args
  if [ "$NUTCH_HEAPSIZE" != "" ]; then
@@ -202,7 +202,7 @@ Index: src/bin/nutch
  
 Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1717669)
+--- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1719003)
 +++ src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(working copy)
 @@ -54,8 +54,8 @@
  import org.apache.nutch.scoring.ScoringFilters;
@@ -311,7 +311,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
        FileInputFormat.addInputPath(job, new Path(segment,
 Index: src/java/org/apache/nutch/indexer/IndexingJob.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1717669)
+--- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1719003)
 +++ src/java/org/apache/nutch/indexer/IndexingJob.java	(working copy)
 @@ -165,7 +165,6 @@
    public int run(String[] args) throws Exception {
@@ -334,7 +334,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
      }
 Index: src/plugin/build.xml
 ===================================================================
---- src/plugin/build.xml	(revision 1717669)
+--- src/plugin/build.xml	(revision 1719003)
 +++ src/plugin/build.xml	(working copy)
 @@ -33,6 +33,7 @@
       <ant dir="index-anchor" target="deploy"/>
@@ -1140,7 +1140,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +
 +  private final List<io.searchbox.core.Index> inputDocs = new ArrayList<io.searchbox.core.Index>();
 +
-+  private int batchSize = 100;
++  private int batchSize = 500;
 +
 +  private static final Logger LOG = LoggerFactory.getLogger(MemexIndexWriter.class);
 +
