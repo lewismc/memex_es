@@ -4,9 +4,9 @@ A number of Nutch plugins and README for persisting Nutch crawl data into a targ
 # Applying
 ```
 $ svn co http://svn.apache.org/repos/asf/nutch/trunk/ nutch_trunk
-$ cp memex_atf_plugin.patch nutch_trunk 
+$ cp memex_cdr_plugin_segments.patch nutch_trunk 
 $ cd nutch_trunk
-$ patch -p0 -i memex_atf_plugin.patch
+$ patch -p0 -i memex_cdr_plugin_segments.patch
 ```
 At this stage you need to open the following file
 ```
@@ -61,7 +61,7 @@ Make sure to register the plugins within the plugin.includes property
 ```
  <property>
    <name>plugin.includes</name>   
-   <value>protocol-http|urlfilter-regex|parse-(html|tika)|index-memex-atf|indexer-memex|scoring-opic|urlnormalizer-(pass|regex|basic)</value>
+   <value>protocol-http|urlfilter-regex|parse-(html|tika)|index-memex|indexer-memex|scoring-opic|urlnormalizer-(pass|regex|basic)</value>
    <description>Regular expression naming plugin directory names to
    include.  Any plugin not matching this expression is excluded.
    In any case you need at least include the nutch-extensionpoints plugin. By
