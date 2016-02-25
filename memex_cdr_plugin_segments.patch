@@ -277,7 +277,12 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
      
      final Parse parse = new ParseImpl(parseText, parseData);
      float boost = 1.0f;
-@@ -309,12 +315,20 @@
+@@ -305,16 +311,24 @@
+     // apply boost to all indexed fields.
+     doc.setWeight(boost);
+     // store boost for use by explain and dedup
+-    doc.add("boost", Float.toString(boost));
++    //doc.add("boost", Float.toString(boost));
  
      try {
        // Indexing filters may also be interested in the signature
@@ -319,7 +324,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
  
 -      doc.add("binaryContent", binary);
 +      String contentType = content.getContentType().trim();
-+      if (!contentType.contains("html") || !contentType.contains("xhtml+xml")) {
++      if (!contentType.contains("html")) {
 +        //do nothing
 +      } else {
 +        doc.add("raw_content", binary);
@@ -821,7 +826,7 @@ Index: src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexin
 ===================================================================
 --- src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexingFilter.java	(working copy)
-@@ -0,0 +1,231 @@
+@@ -0,0 +1,211 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -975,27 +980,7 @@ Index: src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexin
 +        e.printStackTrace();
 +      }
 +      reversedURL[0] = reversedURL[0].replace('.', '/');
-+
-+      // URLs with content at a folder level and nested below that
-+      // run into problems when dumping. For example:
-+      //
-+      // www.foo.com/bar/
-+      // www.foo.com/bar/about.html
-+      //
-+      // One of these will fail to dump depending on processing order.
-+      // To address this, we will use a placeholder when dumping a URL
-+      // such as the one ending in '/bar/'
-+      //String lastDir = reversedURL[reversedURL.length - 1];
-+      //if (! lastDir.contains(".")) {
-+      //if (lastDir.charAt(lastDir.length() - 1) != '/') {
-+      //reversedURL[reversedURL.length - 1] += '/';
-+      //}
-+      //reversedURL[reversedURL.length - 1] += "_file";
-+      //}
-+      //String reversedURLPath = reversedURL[0] + "/" + reversedURL[1] + "/" + DigestUtils.sha256Hex(url);
 +      String reversedURLPath = reversedURL[0] + "/" + DigestUtils.sha256Hex(url.toString()).toUpperCase();
-+
-+      //String reversedURLPath = org.apache.commons.lang3.StringUtils.join(reversedURL, "/");
 +      doc.add("obj_stored_url", "http://imagecat.dyndns.org/weapons/alldata/" + reversedURLPath);
 +    } else {
 +      //do nothing
@@ -1486,11 +1471,11 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +  private void buildElasticDocument(NutchDocument doc) throws IOException {
 +    Map<String, Object> source = new LinkedHashMap<String, Object>();
 +    for (String docField : doc.getFieldNames()) {
-+      if (!docField.equals("_id")) {
++      if (!docField.equals("obj_id")) {
 +        source.put(docField, doc.getFieldValue(docField));
 +      }
 +    }
-+    inputDocs.add(new Index.Builder(source).id(doc.getFieldValue("_id").toString()).build());
++    inputDocs.add(new Index.Builder(source).id(doc.getFieldValue("obj_id").toString()).build());
 +    count++;
 +    LOG.info("Built and added document {} to index batch of {}.", count, batchSize);
 +  }
