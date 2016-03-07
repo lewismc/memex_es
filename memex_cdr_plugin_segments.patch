@@ -826,7 +826,7 @@ Index: src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexin
 ===================================================================
 --- src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexingFilter.java	(working copy)
-@@ -0,0 +1,210 @@
+@@ -0,0 +1,214 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -960,14 +960,18 @@ Index: src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexin
 +    for(String key : cMd.names()) {
 +      extractedData.put(key, cMd.get(key));
 +    }
-+    doc.add("crawl_data", extractedData);
++    if (!extractedData.isEmpty()) {
++      doc.add("crawl_data", extractedData);
++    }
 +    doc.add("crawler", "Nutch-1.12-SNAPSHOT");
 +    Metadata md = parse.getData().getParseMeta();
 +    JSONObject extractedMd = new JSONObject();
 +    for(String key : md.names()) {
 +      extractedMd.put(key, md.get(key));
 +    }
-+    doc.add("extracted_metadata", extractedMd);
++    if (!extractedMd.isEmpty()) {
++      doc.add("extracted_metadata", extractedMd);
++    }
 +    doc.add("extracted_text", parse.getText());
 +    doc.add("obj_original_url", url.toString());
 +
