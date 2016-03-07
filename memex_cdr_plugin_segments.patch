@@ -1,6 +1,6 @@
 Index: build.xml
 ===================================================================
---- build.xml	(revision 1732347)
+--- build.xml	(revision 1733944)
 +++ build.xml	(working copy)
 @@ -177,6 +177,7 @@
        <packageset dir="${plugins.dir}/feed/src/java"/>
@@ -52,7 +52,7 @@ Index: build.xml
          <source path="${plugins.dir}/index-more/src/test/" />
 Index: conf/log4j.properties
 ===================================================================
---- conf/log4j.properties	(revision 1732347)
+--- conf/log4j.properties	(revision 1733944)
 +++ conf/log4j.properties	(working copy)
 @@ -60,8 +60,11 @@
  log4j.logger.org.apache.nutch.hostdb.UpdateHostDb=INFO,cmdstdout
@@ -68,7 +68,7 @@ Index: conf/log4j.properties
  # Daily Rolling File Appender
 Index: conf/nutch-default.xml
 ===================================================================
---- conf/nutch-default.xml	(revision 1732347)
+--- conf/nutch-default.xml	(revision 1733944)
 +++ conf/nutch-default.xml	(working copy)
 @@ -22,6 +22,11 @@
  
@@ -137,7 +137,7 @@ Index: conf/nutch-default.xml
    <name>hostdb.recheck.interval</name>
 Index: ivy/ivysettings.xml
 ===================================================================
---- ivy/ivysettings.xml	(revision 1732347)
+--- ivy/ivysettings.xml	(revision 1733944)
 +++ ivy/ivysettings.xml	(working copy)
 @@ -28,6 +28,9 @@
    <property name="oss.sonatype.org" 
@@ -186,7 +186,7 @@ Index: ivy/ivysettings.xml
    <modules>
 Index: src/bin/nutch
 ===================================================================
---- src/bin/nutch	(revision 1732347)
+--- src/bin/nutch	(revision 1733944)
 +++ src/bin/nutch	(working copy)
 @@ -136,11 +136,12 @@
  
@@ -204,7 +204,7 @@ Index: src/bin/nutch
  
 Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1732347)
+--- src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(revision 1733944)
 +++ src/java/org/apache/nutch/indexer/IndexerMapReduce.java	(working copy)
 @@ -54,8 +54,8 @@
  import org.apache.nutch.scoring.ScoringFilters;
@@ -396,7 +396,7 @@ Index: src/java/org/apache/nutch/indexer/IndexerMapReduce.java
      job.setMapperClass(IndexerMapReduce.class);
 Index: src/java/org/apache/nutch/indexer/IndexingJob.java
 ===================================================================
---- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1732347)
+--- src/java/org/apache/nutch/indexer/IndexingJob.java	(revision 1733944)
 +++ src/java/org/apache/nutch/indexer/IndexingJob.java	(working copy)
 @@ -30,6 +30,12 @@
  
@@ -646,7 +646,7 @@ Index: src/java/org/apache/nutch/indexer/IndexingJob.java
      boolean noCommit = false;
 Index: src/java/org/apache/nutch/tools/FileDumper.java
 ===================================================================
---- src/java/org/apache/nutch/tools/FileDumper.java	(revision 1732347)
+--- src/java/org/apache/nutch/tools/FileDumper.java	(revision 1733944)
 +++ src/java/org/apache/nutch/tools/FileDumper.java	(working copy)
 @@ -333,8 +333,11 @@
          "output directory (which will be created) to host the raw data")
@@ -664,7 +664,7 @@ Index: src/java/org/apache/nutch/tools/FileDumper.java
      .withArgName("mimetype")
 Index: src/plugin/build.xml
 ===================================================================
---- src/plugin/build.xml	(revision 1732347)
+--- src/plugin/build.xml	(revision 1733944)
 +++ src/plugin/build.xml	(working copy)
 @@ -33,6 +33,7 @@
       <ant dir="index-anchor" target="deploy"/>
@@ -826,7 +826,7 @@ Index: src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexin
 ===================================================================
 --- src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexingFilter.java	(revision 0)
 +++ src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexingFilter.java	(working copy)
-@@ -0,0 +1,211 @@
+@@ -0,0 +1,210 @@
 +/*
 + * Licensed to the Apache Software Foundation (ASF) under one or more
 + * contributor license agreements.  See the NOTICE file distributed with
@@ -849,7 +849,6 @@ Index: src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexin
 +import java.io.IOException;
 +import java.net.MalformedURLException;
 +import java.util.HashMap;
-+import java.util.Locale;
 +import org.apache.commons.codec.digest.DigestUtils;
 +import org.apache.commons.lang.StringUtils;
 +import org.apache.hadoop.conf.Configuration;
@@ -913,7 +912,7 @@ Index: src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexin
 +  public NutchDocument filter(NutchDocument doc, Parse parse, Text url,
 +      CrawlDatum datum, Inlinks inlinks) throws IndexingException {
 +    Tika tika = new Tika();
-+    doc.add("obj_id", DigestUtils.sha256Hex(url.toString()).toUpperCase()); // For time being remove + "-" + datum.getFetchTime() as we cannot obtaing mappings for obj_parent
++    doc.add("obj_id", DigestUtils.sha256Hex(url.toString()).toUpperCase());
 +    if (datum.getMetaData().containsKey("obj_parent")) {
 +      doc.add("obj_parent", datum.getMetaData().get("obj_parent").toString());
 +    } else {
@@ -972,7 +971,7 @@ Index: src/plugin/index-memex/src/java/org/apache/nutch/index/memex/MemexIndexin
 +    doc.add("extracted_text", parse.getText());
 +    doc.add("obj_original_url", url.toString());
 +
-+    if (contentType.trim() != "text/html" || contentType.trim() != "application/xhtml+xml") {
++    if (contentType.trim().contains("html")) {
 +      String[] reversedURL = null;
 +      try {
 +        reversedURL = TableUtil.reverseUrl(url.toString()).split(":");
@@ -1401,7 +1400,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/Meme
 +
 +  private final List<io.searchbox.core.Index> inputDocs = new ArrayList<io.searchbox.core.Index>();
 +
-+  private int batchSize = 500;
++  private int batchSize = 1000;
 +
 +  private static final Logger LOG = LoggerFactory.getLogger(MemexIndexWriter.class);
 +
@@ -1622,7 +1621,7 @@ Index: src/plugin/indexer-memex/src/java/org/apache/nutch/indexwriter/memex/pack
 \ No newline at end of file
 Index: src/plugin/scoring-link/src/java/org/apache/nutch/scoring/link/LinkAnalysisScoringFilter.java
 ===================================================================
---- src/plugin/scoring-link/src/java/org/apache/nutch/scoring/link/LinkAnalysisScoringFilter.java	(revision 1732347)
+--- src/plugin/scoring-link/src/java/org/apache/nutch/scoring/link/LinkAnalysisScoringFilter.java	(revision 1733944)
 +++ src/plugin/scoring-link/src/java/org/apache/nutch/scoring/link/LinkAnalysisScoringFilter.java	(working copy)
 @@ -64,7 +64,11 @@
    public float indexerScore(Text url, NutchDocument doc, CrawlDatum dbDatum,
@@ -1639,7 +1638,7 @@ Index: src/plugin/scoring-link/src/java/org/apache/nutch/scoring/link/LinkAnalys
    public void initialScore(Text url, CrawlDatum datum)
 Index: src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java
 ===================================================================
---- src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java	(revision 1732347)
+--- src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java	(revision 1733944)
 +++ src/plugin/scoring-opic/src/java/org/apache/nutch/scoring/opic/OPICScoringFilter.java	(working copy)
 @@ -168,6 +168,10 @@
    public float indexerScore(Text url, NutchDocument doc, CrawlDatum dbDatum,
